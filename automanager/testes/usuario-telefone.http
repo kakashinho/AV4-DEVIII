@@ -1,0 +1,143 @@
+@baseUrl = http://localhost:8080/api
+
+# USUARIOS - ASSOCIACOES
+
+# ASSOCIAR TELEFONE VALIDO
+POST {{baseUrl}}/usuarios/1/telefones
+Content-Type: application/json
+
+{
+  "telefoneId": 1
+}
+
+###
+
+# ASSOCIAR TELEFONE INEXISTENTE
+POST {{baseUrl}}/usuarios/1/telefones
+Content-Type: application/json
+
+{
+  "telefoneId": 999999
+}
+
+###
+
+# ASSOCIAR TELEFONE COM USUARIO INEXISTENTE
+POST {{baseUrl}}/usuarios/999999/telefones
+Content-Type: application/json
+
+{
+  "telefoneId": 1
+}
+
+###
+
+# ASSOCIAR TELEFONE COM ID NULO
+POST {{baseUrl}}/usuarios/1/telefones
+Content-Type: application/json
+
+{
+  "telefoneId": null
+}
+
+###
+
+# ASSOCIAR TELEFONE SEM ID
+POST {{baseUrl}}/usuarios/1/telefones
+Content-Type: application/json
+
+{}
+
+###
+
+# ASSOCIAR TELEFONE COM BODY VAZIO
+POST {{baseUrl}}/usuarios/1/telefones
+Content-Type: application/json
+
+{}
+
+###
+
+# ASSOCIAR TELEFONE COM JSON INVALIDO
+POST {{baseUrl}}/usuarios/1/telefones
+Content-Type: application/json
+
+{
+  "telefoneId": 1,
+}
+
+###
+
+# ASSOCIAR TELEFONE COM CONTENT TYPE INVALIDO
+POST {{baseUrl}}/usuarios/1/telefones
+Content-Type: text/plain
+
+{
+  "telefoneId": 1
+}
+
+###
+
+# ASSOCIAR TELEFONE COM ID STRING
+POST {{baseUrl}}/usuarios/1/telefones
+Content-Type: application/json
+
+{
+  "telefoneId": "abc"
+}
+
+###
+
+# ASSOCIAR TELEFONE COM ID NEGATIVO
+POST {{baseUrl}}/usuarios/1/telefones
+Content-Type: application/json
+
+{
+  "telefoneId": -1
+}
+
+###
+
+# ASSOCIAR TELEFONE COM ID ZERO
+POST {{baseUrl}}/usuarios/1/telefones
+Content-Type: application/json
+
+{
+  "telefoneId": 0
+}
+
+###
+
+# ASSOCIAR TELEFONE COM CAMPO EXTRA
+POST {{baseUrl}}/usuarios/1/telefones
+Content-Type: application/json
+
+{
+  "telefoneId": 1,
+  "extra": "campo-extra"
+}
+
+###
+
+# DESASSOCIAR TELEFONE VALIDO
+DELETE {{baseUrl}}/usuarios/1/telefones/1
+
+###
+
+# DESASSOCIAR TELEFONE INEXISTENTE
+DELETE {{baseUrl}}/usuarios/1/telefones/999999
+
+###
+
+# DESASSOCIAR TELEFONE DE USUARIO INEXISTENTE
+DELETE {{baseUrl}}/usuarios/999999/telefones/1
+
+###
+
+# DESASSOCIAR TELEFONE COM ID INVALIDO
+DELETE {{baseUrl}}/usuarios/1/telefones/abc
+
+###
+
+# DESASSOCIAR TELEFONE COM USUARIO INVALIDO
+DELETE {{baseUrl}}/usuarios/abc/telefones/1

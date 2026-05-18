@@ -1,0 +1,344 @@
+@baseUrl = http://localhost:8080/api
+
+# =========================================
+# VENDAS - TESTES COMPLETOS (CRUD + ERROS)
+# =========================================
+
+# LISTAR VENDAS
+GET {{baseUrl}}/vendas
+
+###
+
+# BUSCAR VENDA OK
+GET {{baseUrl}}/vendas/1
+
+###
+
+# BUSCAR VENDA INEXISTENTE
+GET {{baseUrl}}/vendas/999999
+
+###
+
+# BUSCAR VENDA ID INVÁLIDO (STRING)
+GET {{baseUrl}}/vendas/abc
+
+###
+
+# BUSCAR VENDA ID ZERO
+GET {{baseUrl}}/vendas/0
+
+###
+
+# BUSCAR VENDA ID NEGATIVO
+GET {{baseUrl}}/vendas/-1
+
+###
+
+# =========================
+# CRIAÇÃO - CASOS VÁLIDOS
+# =========================
+
+# CRIAR VENDA COMPLETA
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-001",
+  "clienteId": 3,
+  "funcionarioId": 1,
+  "veiculoId": 2,
+  "mercadoriasIds": [1],
+  "servicosIds": [1]
+}
+
+###
+
+# CRIAR VENDA SOMENTE COM MERCADORIA
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-002",
+  "clienteId": 1,
+  "funcionarioId": 2,
+  "mercadoriasIds": [1]
+}
+
+###
+
+# CRIAR VENDA SOMENTE COM SERVIÇO
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-003",
+  "clienteId": 1,
+  "funcionarioId": 2,
+  "servicosIds": [1]
+}
+
+###
+
+# CRIAR VENDA COM VEÍCULO NULO (válido se regra permitir)
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-004",
+  "clienteId": 1,
+  "funcionarioId": 2,
+  "mercadoriasIds": [1]
+}
+
+###
+
+# =========================
+# ERROS DE VALIDAÇÃO
+# =========================
+
+# IDENTIFICAÇÃO VAZIA
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "",
+  "clienteId": 1,
+  "funcionarioId": 2,
+  "mercadoriasIds": [1]
+}
+
+###
+
+# IDENTIFICAÇÃO NULA
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{
+  "clienteId": 1,
+  "funcionarioId": 2
+}
+
+###
+
+# SEM CLIENTE
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-005",
+  "funcionarioId": 2,
+  "mercadoriasIds": [1]
+}
+
+###
+
+# SEM FUNCIONÁRIO
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-006",
+  "clienteId": 1,
+  "mercadoriasIds": [1]
+}
+
+###
+
+# SEM ITENS (REGRA NEGÓCIO)
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-007",
+  "clienteId": 1,
+  "funcionarioId": 2,
+  "mercadoriasIds": [],
+  "servicosIds": []
+}
+
+###
+
+# CLIENTE = FUNCIONÁRIO (REGRA NEGÓCIO)
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-008",
+  "clienteId": 1,
+  "funcionarioId": 1,
+  "mercadoriasIds": [1]
+}
+
+###
+
+# =========================
+# IDs INVÁLIDOS DE RELACIONAMENTO
+# =========================
+
+# CLIENTE INEXISTENTE
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-009",
+  "clienteId": 999999,
+  "funcionarioId": 2,
+  "mercadoriasIds": [1]
+}
+
+###
+
+# FUNCIONÁRIO INEXISTENTE
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-010",
+  "clienteId": 1,
+  "funcionarioId": 999999,
+  "mercadoriasIds": [1]
+}
+
+###
+
+# MERCADORIA INEXISTENTE
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-011",
+  "clienteId": 1,
+  "funcionarioId": 2,
+  "mercadoriasIds": [999999]
+}
+
+###
+
+# SERVIÇO INEXISTENTE
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-012",
+  "clienteId": 1,
+  "funcionarioId": 2,
+  "servicosIds": [999999]
+}
+
+###
+
+# VEÍCULO INEXISTENTE
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-013",
+  "clienteId": 1,
+  "funcionarioId": 2,
+  "veiculoId": 999999,
+  "mercadoriasIds": [1]
+}
+
+###
+
+# =========================
+# PAYLOADS MALFORMADOS
+# =========================
+
+# JSON INVÁLIDO
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-014",
+  "clienteId": 1,
+  "funcionarioId": 2,
+  "mercadoriasIds": [1],
+}
+
+###
+
+# BODY VAZIO
+POST {{baseUrl}}/vendas
+Content-Type: application/json
+
+{}
+
+###
+
+# CONTENT-TYPE ERRADO
+POST {{baseUrl}}/vendas
+Content-Type: text/plain
+
+{
+  "identificacao": "VENDA-015"
+}
+
+###
+
+# =========================
+# ATUALIZAÇÃO
+# =========================
+
+# ATUALIZAR OK
+PUT {{baseUrl}}/vendas/1
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-001-UPDATE",
+  "clienteId": 3,
+  "funcionarioId": 1,
+  "veiculoId": 2,
+  "mercadoriasIds": [1],
+  "servicosIds": [1]
+}
+
+###
+
+# ATUALIZAR SEM IDENTIFICAÇÃO
+PUT {{baseUrl}}/vendas/1
+Content-Type: application/json
+
+{
+  "clienteId": 1,
+  "funcionarioId": 2
+}
+
+###
+
+# ATUALIZAR SEM BODY
+PUT {{baseUrl}}/vendas/1
+Content-Type: application/json
+
+{}
+
+###
+
+# ATUALIZAR ID INVÁLIDO
+PUT {{baseUrl}}/vendas/abc
+Content-Type: application/json
+
+{
+  "identificacao": "TESTE"
+}
+
+###
+
+# =========================
+# DELETE
+# =========================
+
+# DELETE OK
+DELETE {{baseUrl}}/vendas/1
+
+###
+
+# DELETE INEXISTENTE
+DELETE {{baseUrl}}/vendas/999999
+
+###
+
+# DELETE ID INVÁLIDO
+DELETE {{baseUrl}}/vendas/abc
+
+###

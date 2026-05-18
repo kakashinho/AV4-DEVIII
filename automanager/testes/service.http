@@ -1,0 +1,214 @@
+@baseUrl = http://localhost:8080/api
+
+# SERVICOS
+
+# LISTAR SERVICOS OK
+GET {{baseUrl}}/servicos
+
+###
+
+# BUSCAR SERVICO EXISTENTE OK
+GET {{baseUrl}}/servicos/1
+
+###
+
+# BUSCAR SERVICO INEXISTENTE OK
+GET {{baseUrl}}/servicos/999999
+
+###
+
+# BUSCAR SERVICO COM ID INVALIDO
+GET {{baseUrl}}/servicos/abc
+
+###
+
+# BUSCAR SERVICO COM ID NEGATIVO
+GET {{baseUrl}}/servicos/-1
+
+###
+
+# BUSCAR SERVICO COM ID ZERO
+GET {{baseUrl}}/servicos/0
+
+###
+
+# CRIAR SERVICO VALIDO OK
+POST {{baseUrl}}/servicos
+Content-Type: application/json
+
+{
+  "nome": "Troca de óleo",
+  "descricao": "Troca completa com filtro",
+  "valor": 120.00
+}
+
+###
+
+# CRIAR SERVICO SEM BODY
+POST {{baseUrl}}/servicos
+Content-Type: application/json
+
+###
+
+# CRIAR SERVICO COM JSON INVALIDO
+POST {{baseUrl}}/servicos
+Content-Type: application/json
+
+{
+  "nome": "Alinhamento",
+  "descricao": "Correção de direção",
+  "valor": 80.00,
+}
+
+###
+
+# CRIAR SERVICO COM CONTENT-TYPE ERRADO
+POST {{baseUrl}}/servicos
+Content-Type: text/plain
+
+{
+  "nome": "Balanceamento",
+  "descricao": "Rodas",
+  "valor": 50.00
+}
+
+###
+
+# CRIAR SERVICO SEM NOME (ERRO VALIDACAO)
+POST {{baseUrl}}/servicos
+Content-Type: application/json
+
+{
+  "nome": "",
+  "descricao": "Serviço teste",
+  "valor": 100.00
+}
+
+###
+
+# CRIAR SERVICO SEM VALOR (ERRO VALIDACAO)
+POST {{baseUrl}}/servicos
+Content-Type: application/json
+
+{
+  "nome": "Freio",
+  "descricao": "Troca pastilha"
+}
+
+###
+
+# CRIAR SERVICO COM VALOR ZERO
+POST {{baseUrl}}/servicos
+Content-Type: application/json
+
+{
+  "nome": "Suspensão",
+  "descricao": "Reparo",
+  "valor": 0
+}
+
+###
+
+# CRIAR SERVICO COM VALOR NEGATIVO
+POST {{baseUrl}}/servicos
+Content-Type: application/json
+
+{
+  "nome": "Motor",
+  "descricao": "Reparo completo",
+  "valor": -50
+}
+
+###
+
+# CRIAR SERVICO VALIDO 2
+POST {{baseUrl}}/servicos
+Content-Type: application/json
+
+{
+  "nome": "Alinhamento",
+  "descricao": "Correção de direção",
+  "valor": 80.00
+}
+
+###
+
+# ATUALIZAR SERVICO VALIDO
+PUT {{baseUrl}}/servicos/1
+Content-Type: application/json
+
+{
+  "nome": "Troca de óleo premium",
+  "descricao": "Óleo sintético",
+  "valor": 150.00
+}
+
+###
+
+# ATUALIZAR SERVICO PARCIAL - Não é possível
+PUT {{baseUrl}}/servicos/1
+Content-Type: application/json
+
+{
+  "valor": 200.00
+}
+
+###
+
+# ATUALIZAR SERVICO COM ID INVALIDO
+PUT {{baseUrl}}/servicos/abc
+Content-Type: application/json
+
+{
+  "nome": "Teste"
+}
+
+###
+
+# ATUALIZAR SERVICO COM ID NEGATIVO
+PUT {{baseUrl}}/servicos/-1
+Content-Type: application/json
+
+{
+  "nome": "Teste"
+}
+
+###
+
+# ATUALIZAR SERVICO SEM BODY
+PUT {{baseUrl}}/servicos/1
+Content-Type: application/json
+
+{}
+
+###
+
+# DELETAR SERVICO VALIDO
+DELETE {{baseUrl}}/servicos/1
+
+###
+
+# DELETAR SERVICO INEXISTENTE
+DELETE {{baseUrl}}/servicos/999999
+
+###
+
+# DELETAR SERVICO COM ID INVALIDO
+DELETE {{baseUrl}}/servicos/abc
+
+###
+
+# DELETAR SERVICO COM ID NEGATIVO
+DELETE {{baseUrl}}/servicos/-1
+
+###
+
+# DELETAR SERVICO COM ID ZERO
+DELETE {{baseUrl}}/servicos/0
+
+###
+
+# TESTE HATEOAS
+GET {{baseUrl}}/servicos/1
+
+###

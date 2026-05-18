@@ -1,0 +1,132 @@
+@baseUrl = http://localhost:8080/api
+
+# DOCUMENTOS
+
+# LISTAR DOCUMENTOS OK
+GET {{baseUrl}}/documentos
+
+###
+
+# BUSCAR DOCUMENTO EXISTENTE OK
+GET {{baseUrl}}/documentos/1
+
+###
+
+# BUSCAR DOCUMENTO INEXISTENTE OK
+GET {{baseUrl}}/documentos/999999
+
+###
+
+
+
+# CRIAR DOCUMENTO VALIDO OK
+POST {{baseUrl}}/documentos
+Content-Type: application/json
+
+{
+  "tipo": "CPF",
+  "numero": "12345678900",
+  "dataEmissao": "2020-01-01"
+}
+
+###
+
+# CRIAR DOCUMENTO COM ENUM INVALIDO
+POST {{baseUrl}}/documentos
+Content-Type: application/json
+
+{
+  "tipo": "CPF_INVALIDO",
+  "numero": "12345678900",
+  "dataEmissao": "2020-01-01"
+}
+
+###
+
+# CRIAR DOCUMENTO COM DATA FUTURA OK
+POST {{baseUrl}}/documentos
+Content-Type: application/json
+
+{
+  "tipo": "CPF",
+  "numero": "12345678900",
+  "dataEmissao": "2099-01-01"
+}
+
+###
+
+# CRIAR DOCUMENTO COM NUMERO VAZIO OK
+POST {{baseUrl}}/documentos
+Content-Type: application/json
+
+{
+  "tipo": "CPF",
+  "numero": "",
+  "dataEmissao": "2020-01-01"
+}
+
+###
+
+# CRIAR DOCUMENTO COM dataEmissao VAZIO OK
+POST {{baseUrl}}/documentos
+Content-Type: application/json
+
+{
+  "tipo": "CPF",
+  "numero": "12345678900",
+  "dataEmissao": ""
+}
+
+
+###
+
+# CRIAR DOCUMENTO SEM TIPO OK
+POST {{baseUrl}}/documentos
+Content-Type: application/json
+
+{
+  "numero": "12345678900",
+  "dataEmissao": "2020-01-01"
+}
+
+###
+
+# CRIAR DOCUMENTO SEM DATA OK
+POST {{baseUrl}}/documentos
+Content-Type: application/json
+
+{
+  "tipo": "CPF",
+  "numero": "12345678900",
+  "dataEmissao": ""
+}
+
+###
+
+# CRIAR DOCUMENTO COM BODY VAZIO OK
+POST {{baseUrl}}/documentos
+Content-Type: application/json
+
+{}
+
+###
+
+# ATUALIZAR DOCUMENTO VALIDO OK
+PUT {{baseUrl}}/documentos/1
+Content-Type: application/json
+
+{
+  "tipo": "RG",
+  "numero": "99887766",
+  "dataEmissao": "2020-01-01"
+}
+
+###
+
+# REMOVER DOCUMENTO EXISTENTE OK
+DELETE {{baseUrl}}/documentos/2
+
+###
+
+# REMOVER DOCUMENTO INEXISTENTE
+DELETE {{baseUrl}}/documentos/999999

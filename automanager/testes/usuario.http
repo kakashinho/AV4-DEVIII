@@ -1,0 +1,509 @@
+### Variável base
+@baseUrl = http://localhost:8080/api/usuarios
+@usuarioId = 1
+
+###
+
+# =========================
+# LISTAR USUÁRIOS
+# =========================
+GET {{baseUrl}}
+Accept: application/json
+
+###
+
+# =========================
+# BUSCAR USUÁRIO POR ID
+# =========================
+GET {{baseUrl}}/1
+Accept: application/json
+
+###
+
+# =========================
+# CRIAR USUÁRIO (CASO VÁLIDO MÍNIMO)
+# =========================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "João Silva",
+  "nomeSocial": "João",
+  "perfis": ["CLIENTE"],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São José dos Campos",
+    "bairro": "Centro",
+    "rua": "Rua A",
+    "numero": "100",
+    "codigoPostal": "12209000",
+    "informacoesAdicionais": "Apto 12"
+  }
+}
+
+###
+
+# =========================
+# CRIAR USUÁRIO (SEM PERFIL → ERRO ESPERADO) OK
+# =========================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "Erro Perfil",
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São José dos Campos",
+    "bairro": "Centro",
+    "rua": "Rua A",
+    "numero": "100",
+    "codigoPostal": "12209000"
+  }
+}
+
+###
+
+# =========================
+# CRIAR USUÁRIO (SEM NOME → ERRO) OK
+# =========================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nomeSocial": "Teste",
+  "perfis": ["FUNCIONARIO"],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São José dos Campos",
+    "bairro": "Centro",
+    "rua": "Rua A",
+    "numero": "100",
+    "codigoPostal": "12209000"
+  }
+}
+
+###
+
+# =========================
+# CRIAR USUÁRIO (ENDEREÇO INCOMPLETO → ERRO) OK
+# =========================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "Endereco Invalido",
+  "perfis": ["CLIENTE"],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "",
+    "bairro": "",
+    "rua": "",
+    "numero": "",
+    "codigoPostal": ""
+  }
+}
+
+###
+
+# =========================
+# CRIAR USUÁRIO (COM TELEFONE) OK
+# =========================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "Usuario com Telefone",
+  "perfis": ["CLIENTE"],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São José dos Campos",
+    "bairro": "Jardim",
+    "rua": "Rua B",
+    "numero": "200",
+    "codigoPostal": "12230000"
+  }
+}
+
+###
+
+# =========================
+# CRIAR USUÁRIO (EMAIL) OK
+# =========================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "Usuario Email",
+  "perfis": ["CLIENTE"],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São José dos Campos",
+    "bairro": "Centro",
+    "rua": "Rua C",
+    "numero": "300",
+    "codigoPostal": "12200000"
+  }
+}
+
+###
+
+# =========================
+# CRIAR USUÁRIO (DOCUMENTO) OK
+# =========================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "Usuario Documento",
+  "perfis": ["CLIENTE"],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São José dos Campos",
+    "bairro": "Centro",
+    "rua": "Rua D",
+    "numero": "400",
+    "codigoPostal": "12200000"
+  }
+}
+
+###
+
+# =========================
+# CRIAR USUÁRIO (CREDENCIAL USER/SENHA) OK
+# =========================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "Usuario Credencial",
+  "perfis": ["FUNCIONARIO"],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São José dos Campos",
+    "bairro": "Centro",
+    "rua": "Rua E",
+    "numero": "500",
+    "codigoPostal": "12200000"
+  }
+}
+
+###
+
+# =========================
+# ATUALIZAR USUÁRIO
+# =========================
+PUT {{baseUrl}}/{{usuarioId}}
+Content-Type: application/json
+
+{
+  "nome": "Nome Atualizado",
+  "nomeSocial": "Atualizado",
+  "perfis": ["CLIENTE"],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "Atualizada",
+    "bairro": "Centro",
+    "rua": "Rua Atual",
+    "numero": "999",
+    "codigoPostal": "99999999"
+  }
+}
+
+###
+
+# =========================
+# REMOVER USUÁRIO
+# =========================
+DELETE {{baseUrl}}/{{usuarioId}}
+
+### =========================================================
+### NOME NULL OK
+### =========================================================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": null,
+  "perfis": ["CLIENTE"],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São Paulo",
+    "bairro": "Centro",
+    "rua": "Rua A",
+    "numero": "1",
+    "codigoPostal": "00000000"
+  }
+}
+
+###
+
+### =========================================================
+### NOME EM BRANCO OK
+### =========================================================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "",
+  "perfis": ["CLIENTE"],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São Paulo",
+    "bairro": "Centro",
+    "rua": "Rua A",
+    "numero": "1",
+    "codigoPostal": "00000000"
+  }
+}
+
+###
+
+### =========================================================
+### PERFIS VAZIO OK
+### =========================================================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "Usuario Sem Perfil",
+  "perfis": [],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São Paulo",
+    "bairro": "Centro",
+    "rua": "Rua A",
+    "numero": "1",
+    "codigoPostal": "00000000"
+  }
+}
+
+###
+
+### =========================================================
+### PERFIS NULL OK
+### =========================================================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "Usuario Sem Perfil",
+  "perfis": null,
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São Paulo",
+    "bairro": "Centro",
+    "rua": "Rua A",
+    "numero": "1",
+    "codigoPostal": "00000000"
+  }
+}
+
+###
+
+### =========================================================
+### ENDEREÇO NULL OK
+### =========================================================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "Usuario Sem Endereco",
+  "perfis": ["CLIENTE"],
+  "endereco": null
+}
+
+###
+
+### =========================================================
+### ESTADO VAZIO OK
+### =========================================================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "Endereco Invalido",
+  "perfis": ["CLIENTE"],
+  "endereco": {
+    "estado": "",
+    "cidade": "São Paulo",
+    "bairro": "Centro",
+    "rua": "Rua A",
+    "numero": "1",
+    "codigoPostal": "00000000"
+  }
+}
+
+###
+
+### =========================================================
+### CIDADE VAZIA OK
+### =========================================================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "Endereco Invalido",
+  "perfis": ["CLIENTE"],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "",
+    "bairro": "Centro",
+    "rua": "Rua A",
+    "numero": "1",
+    "codigoPostal": "00000000"
+  }
+}
+
+###
+
+### =========================================================
+### BAIRRO VAZIO OK
+### =========================================================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "Endereco Invalido",
+  "perfis": ["CLIENTE"],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São Paulo",
+    "bairro": "",
+    "rua": "Rua A",
+    "numero": "1",
+    "codigoPostal": "00000000"
+  }
+}
+
+###
+
+### =========================================================
+### RUA VAZIA OK
+### =========================================================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "Endereco Invalido",
+  "perfis": ["CLIENTE"],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São Paulo",
+    "bairro": "Centro",
+    "rua": "",
+    "numero": "1",
+    "codigoPostal": "00000000"
+  }
+}
+
+###
+
+### =========================================================
+### NUMERO VAZIO OK
+### =========================================================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "Endereco Invalido",
+  "perfis": ["CLIENTE"],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São Paulo",
+    "bairro": "Centro",
+    "rua": "Rua A",
+    "numero": "",
+    "codigoPostal": "00000000"
+  }
+}
+
+###
+
+### =========================================================
+### CEP VAZIO OK
+### =========================================================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "Endereco Invalido",
+  "perfis": ["CLIENTE"],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São Paulo",
+    "bairro": "Centro",
+    "rua": "Rua A",
+    "numero": "1",
+    "codigoPostal": ""
+  }
+}
+
+###
+
+### =========================================================
+### EMAIL INVÁLIDO OK
+### =========================================================
+POST {{baseUrl}}/{{usuarioId}}/emails
+Content-Type: application/json
+
+{
+  "endereco": "email-invalido"
+}
+
+###
+
+### =========================================================
+### EMAIL NULL OK
+### =========================================================
+POST {{baseUrl}}/{{usuarioId}}/emails
+Content-Type: application/json
+
+{
+  "endereco": null
+}
+
+###
+
+### =========================================================
+### EMAIL EM BRANCO OK
+### =========================================================
+POST {{baseUrl}}/{{usuarioId}}/emails
+Content-Type: application/json
+
+{
+  "endereco": ""
+}
+
+###
+
+### =========================================================
+### EMAIL DUPLICADO
+### Esperado: 409 CONFLICT OK
+### =========================================================
+POST {{baseUrl}}/{{usuarioId}}/emails
+Content-Type: application/json
+
+{
+  "endereco": "usuario@email.com"
+}
+
+
+### =========================================================
+### BUSCAR USUÁRIO INEXISTENTE
+### Esperado: 404
+### =========================================================
+GET {{baseUrl}}/999999
+
+
+### =========================================================
+### REMOVER USUÁRIO EXISTENTE
+### =========================================================
+DELETE {{baseUrl}}/{{usuarioId}}
+
+###
+
+### =========================================================
+### REMOVER USUÁRIO INEXISTENTE
+### Esperado: 404
+### =========================================================
+DELETE {{baseUrl}}/999999

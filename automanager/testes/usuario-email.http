@@ -1,0 +1,139 @@
+@baseUrl = http://localhost:8080/api
+
+# EMAILS
+
+# LISTAR EMAILS OK
+GET {{baseUrl}}/emails
+
+###
+
+# BUSCAR EMAIL EXISTENTE
+GET {{baseUrl}}/emails/1
+
+###
+
+# ASSOCIAR EMAIL VALIDO
+POST {{baseUrl}}/usuarios/1/emails
+Content-Type: application/json
+
+{
+  "emailId": 1
+}
+
+###
+
+# ASSOCIAR EMAIL INEXISTENTE
+POST {{baseUrl}}/usuarios/1/emails
+Content-Type: application/json
+
+{
+  "emailId": 999999
+}
+
+###
+
+# ASSOCIAR EMAIL COM USUARIO INEXISTENTE
+POST {{baseUrl}}/usuarios/999999/emails
+Content-Type: application/json
+
+{
+  "emailId": 1
+}
+
+###
+
+# ASSOCIAR EMAIL COM ID NULO
+POST {{baseUrl}}/usuarios/1/emails
+Content-Type: application/json
+
+{
+  "emailId": null
+}
+
+###
+
+# ASSOCIAR EMAIL SEM ID
+POST {{baseUrl}}/usuarios/1/emails
+Content-Type: application/json
+
+{}
+
+###
+
+# ASSOCIAR EMAIL COM JSON INVALIDO
+POST {{baseUrl}}/usuarios/1/emails
+Content-Type: application/json
+
+{
+  "emailId": 1,
+}
+
+###
+
+# ASSOCIAR EMAIL COM CONTENT TYPE INVALIDO
+POST {{baseUrl}}/usuarios/1/emails
+Content-Type: text/plain
+
+{
+  "emailId": 1
+}
+
+###
+
+# ASSOCIAR EMAIL COM ID STRING
+POST {{baseUrl}}/usuarios/1/emails
+Content-Type: application/json
+
+{
+  "emailId": "abc"
+}
+
+###
+
+# ASSOCIAR EMAIL COM ID NEGATIVO
+POST {{baseUrl}}/usuarios/1/emails
+Content-Type: application/json
+
+{
+  "emailId": -1
+}
+
+###
+
+# ASSOCIAR EMAIL COM CAMPO EXTRA
+POST {{baseUrl}}/usuarios/1/emails
+Content-Type: application/json
+
+{
+  "emailId": 1,
+  "extra": "campo-extra"
+}
+
+###
+GET {{baseUrl}}/usuarios/1
+
+
+###
+
+# DESASSOCIAR EMAIL VALIDO
+DELETE {{baseUrl}}/usuarios/2/emails/1
+
+###
+
+# DESASSOCIAR EMAIL INEXISTENTE
+DELETE {{baseUrl}}/usuarios/1/emails/999999
+
+###
+
+# DESASSOCIAR EMAIL DE USUARIO INEXISTENTE
+DELETE {{baseUrl}}/usuarios/999999/emails/1
+
+###
+
+# DESASSOCIAR EMAIL COM ID INVALIDO
+DELETE {{baseUrl}}/usuarios/1/emails/abc
+
+###
+
+# DESASSOCIAR EMAIL COM USUARIO INVALIDO
+DELETE {{baseUrl}}/usuarios/abc/emails/1

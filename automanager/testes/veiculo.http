@@ -1,0 +1,242 @@
+@baseUrl = http://localhost:8080/api
+
+# VEICULOS
+
+# LISTAR VEICULOS OK
+GET {{baseUrl}}/veiculos
+
+###
+
+# BUSCAR VEICULO EXISTENTE OK
+GET {{baseUrl}}/veiculos/1
+
+###
+
+# BUSCAR VEICULO INEXISTENTE OK
+GET {{baseUrl}}/veiculos/999999
+
+###
+
+# BUSCAR VEICULO COM ID INVALIDO
+GET {{baseUrl}}/veiculos/abc
+
+###
+
+# BUSCAR VEICULO COM ID NEGATIVO
+GET {{baseUrl}}/veiculos/-1
+
+###
+
+# BUSCAR VEICULO COM ID ZERO
+GET {{baseUrl}}/veiculos/0
+
+###
+
+# CRIAR VEICULO VALIDO OK
+POST {{baseUrl}}/veiculos
+Content-Type: application/json
+
+{
+  "tipo": "HATCH",
+  "modelo": "Civic",
+  "placa": "ABC1D23",
+  "proprietarioId": 1
+}
+
+###
+
+# CRIAR VEICULO SEM PROPRIETARIO (ERRO)
+POST {{baseUrl}}/veiculos
+Content-Type: application/json
+
+{
+  "tipo": "CARRO",
+  "modelo": "Civic",
+  "placa": "ABC1D23"
+}
+
+###
+
+# CRIAR VEICULO COM PROPRIETARIO INVALIDO
+POST {{baseUrl}}/veiculos
+Content-Type: application/json
+
+{
+  "tipo": "CARRO",
+  "modelo": "Civic",
+  "placa": "ABC1D23",
+  "proprietarioId": 999999
+}
+
+###
+
+# CRIAR VEICULO COM BODY VAZIO
+POST {{baseUrl}}/veiculos
+Content-Type: application/json
+
+{}
+
+###
+
+# CRIAR VEICULO COM JSON INVALIDO
+POST {{baseUrl}}/veiculos
+Content-Type: application/json
+
+{
+  "tipo": "CARRO",
+  "modelo": "Civic",
+  "placa": "ABC1D23",
+}
+
+###
+
+# CRIAR VEICULO COM CONTENT TYPE ERRADO
+POST {{baseUrl}}/veiculos
+Content-Type: text/plain
+
+{
+  "tipo": "CARRO",
+  "modelo": "Civic",
+  "placa": "ABC1D23",
+  "proprietarioId": 1
+}
+
+###
+
+# ATUALIZAR VEICULO VALIDO
+PUT {{baseUrl}}/veiculos/1
+Content-Type: application/json
+
+{
+  "tipo": "PICKUP",
+  "modelo": "CB 500",
+  "placa": "XYZ9A88",
+  "proprietarioId": 2
+}
+
+###
+
+# ATUALIZAR VEICULO PARCIAL
+PUT {{baseUrl}}/veiculos/1
+Content-Type: application/json
+
+{
+  "modelo": "Civic Touring"
+}
+
+###
+
+# ATUALIZAR VEICULO COM ID INVALIDO
+PUT {{baseUrl}}/veiculos/abc
+Content-Type: application/json
+
+{
+  "modelo": "Civic Touring"
+}
+
+###
+
+# ATUALIZAR VEICULO COM ID NEGATIVO
+PUT {{baseUrl}}/veiculos/-1
+Content-Type: application/json
+
+{
+  "modelo": "Civic Touring"
+}
+
+###
+
+# DELETAR VEICULO VALIDO
+DELETE {{baseUrl}}/veiculos/1
+
+###
+
+# DELETAR VEICULO INEXISTENTE
+DELETE {{baseUrl}}/veiculos/999999
+
+###
+
+# DELETAR VEICULO COM ID INVALIDO
+DELETE {{baseUrl}}/veiculos/abc
+
+###
+
+# DELETAR VEICULO COM ID NEGATIVO
+DELETE {{baseUrl}}/veiculos/-1
+
+###
+
+# DELETAR VEICULO COM ID ZERO
+DELETE {{baseUrl}}/veiculos/0
+
+###
+
+# TESTE HATEOAS
+GET {{baseUrl}}/veiculos/1
+
+###
+
+@baseUrl = http://localhost:8080/api
+
+# =========================================================
+# VEÍCULOS - TRANSFERÊNCIA DE PROPRIETÁRIO (DESASSOCIAÇÃO)
+# =========================================================
+
+# Criar veículo para usuário 1
+POST {{baseUrl}}/veiculos
+Content-Type: application/json
+
+{
+  "tipo": "HATCH",
+  "modelo": "Civic",
+  "placa": "ABC1234",
+  "proprietarioId": 3
+}
+
+###
+
+# Ver veículo com proprietário atual
+GET {{baseUrl}}/veiculos/1
+
+###
+
+# "DESASSOCIAR" (TRANSFERIR para outro usuário)
+PUT {{baseUrl}}/veiculos/1/proprietario/2
+
+###
+
+# Ver veículo após transferência
+GET {{baseUrl}}/veiculos/1
+
+###
+
+# Transferência de volta (novo ciclo)
+PUT {{baseUrl}}/veiculos/1/proprietario/2
+
+###
+
+# Tentativa de transferência para usuário inexistente (erro)
+PUT {{baseUrl}}/veiculos/1/proprietario/999999
+
+###
+
+# =========================================================
+# TESTE DE CONSISTÊNCIA
+# =========================================================
+
+# Atualizar veículo sem mexer no proprietário
+PUT {{baseUrl}}/veiculos/1
+Content-Type: application/json
+
+{
+  "tipo": "MOTO",
+  "modelo": "CB 500",
+  "placa": "XYZ9876"
+}
+
+###
+
+# Ver estado final
+GET {{baseUrl}}/veiculos/1
+
+###

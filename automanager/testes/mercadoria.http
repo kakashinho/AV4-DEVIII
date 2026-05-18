@@ -1,0 +1,281 @@
+@baseUrl = http://localhost:8080/api
+
+# MERCADORIAS
+
+# LISTAR MERCADORIAS OK
+GET {{baseUrl}}/mercadorias
+
+###
+
+# BUSCAR MERCADORIA EXISTENTE OK
+GET {{baseUrl}}/mercadorias/1
+
+###
+
+# BUSCAR MERCADORIA INEXISTENTE OK
+GET {{baseUrl}}/mercadorias/999999
+
+###
+
+# BUSCAR MERCADORIA COM ID INVALIDO
+GET {{baseUrl}}/mercadorias/abc
+
+###
+
+# BUSCAR MERCADORIA COM ID NEGATIVO
+GET {{baseUrl}}/mercadorias/-1
+
+###
+
+# BUSCAR MERCADORIA COM ID ZERO
+GET {{baseUrl}}/mercadorias/0
+
+###
+
+# CRIAR MERCADORIA VALIDA OK
+POST {{baseUrl}}/mercadorias
+Content-Type: application/json
+
+{
+  "nome": "Óleo 5W30",
+  "descricao": "Óleo sintético motor",
+  "valor": 45.90,
+  "validade": "2026-12-31",
+  "fabricacao": "2025-01-01",
+  "quantidade": 10
+}
+
+###
+
+# CRIAR MERCADORIA SEM BODY
+POST {{baseUrl}}/mercadorias
+Content-Type: application/json
+
+###
+
+# CRIAR MERCADORIA JSON INVALIDO
+POST {{baseUrl}}/mercadorias
+Content-Type: application/json
+
+{
+  "nome": "Filtro de ar",
+  "descricao": "Motor",
+  "valor": 30.00,
+  "validade": "2026-12-31",
+  "fabricacao": "2025-01-01",
+  "quantidade": 5,
+}
+
+###
+
+# CRIAR MERCADORIA CONTENT TYPE ERRADO
+POST {{baseUrl}}/mercadorias
+Content-Type: text/plain
+
+{
+  "nome": "Pneu",
+  "descricao": "Aro 15",
+  "valor": 300.00,
+  "validade": "2026-12-31",
+  "fabricacao": "2025-01-01",
+  "quantidade": 4
+}
+
+###
+
+# CRIAR MERCADORIA SEM NOME (ERRO VALIDACAO)
+POST {{baseUrl}}/mercadorias
+Content-Type: application/json
+
+{
+  "nome": "",
+  "descricao": "Teste",
+  "valor": 50.00,
+  "validade": "2026-12-31",
+  "fabricacao": "2025-01-01",
+  "quantidade": 5
+}
+
+###
+
+# CRIAR MERCADORIA SEM VALOR (ERRO VALIDACAO)
+POST {{baseUrl}}/mercadorias
+Content-Type: application/json
+
+{
+  "nome": "Bateria",
+  "descricao": "Carro",
+  "validade": "2026-12-31",
+  "fabricacao": "2025-01-01",
+  "quantidade": 5
+}
+
+###
+
+# CRIAR MERCADORIA VALIDADE PASSADA (ERRO VALIDACAO)
+POST {{baseUrl}}/mercadorias
+Content-Type: application/json
+
+{
+  "nome": "Item vencido",
+  "descricao": "Teste",
+  "valor": 10.00,
+  "validade": "2020-01-01",
+  "fabricacao": "2019-01-01",
+  "quantidade": 5
+}
+
+###
+
+# CRIAR MERCADORIA FABRICACAO FUTURA (ERRO VALIDACAO)
+POST {{baseUrl}}/mercadorias
+Content-Type: application/json
+
+{
+  "nome": "Item inválido",
+  "descricao": "Teste",
+  "valor": 10.00,
+  "validade": "2026-12-31",
+  "fabricacao": "2030-01-01",
+  "quantidade": 5
+}
+
+###
+
+# CRIAR MERCADORIA COM QUANTIDADE NEGATIVA (REGRA SERVICE)
+POST {{baseUrl}}/mercadorias
+Content-Type: application/json
+
+{
+  "nome": "Erro estoque",
+  "descricao": "Teste",
+  "valor": 10.00,
+  "validade": "2026-12-31",
+  "fabricacao": "2025-01-01",
+  "quantidade": -5
+}
+
+###
+
+# ATUALIZAR MERCADORIA VALIDA
+PUT {{baseUrl}}/mercadorias/1
+Content-Type: application/json
+
+{
+  "nome": "Óleo premium",
+  "descricao": "Atualizado",
+  "valor": 60.00,
+  "validade": "2027-01-01",
+  "fabricacao": "2025-01-01",
+  "quantidade": 20
+}
+
+###
+
+# ATUALIZAR MERCADORIA PARCIAL
+PUT {{baseUrl}}/mercadorias/1
+Content-Type: application/json
+
+{
+  "valor": 99.90
+}
+
+###
+
+# ATUALIZAR MERCADORIA COM ID INVALIDO
+PUT {{baseUrl}}/mercadorias/abc
+Content-Type: application/json
+
+{
+  "nome": "Teste"
+}
+
+###
+
+# ATUALIZAR MERCADORIA COM ID NEGATIVO
+PUT {{baseUrl}}/mercadorias/-1
+Content-Type: application/json
+
+{
+  "nome": "Teste"
+}
+
+###
+
+# ATUALIZAR MERCADORIA SEM BODY
+PUT {{baseUrl}}/mercadorias/1
+Content-Type: application/json
+
+{}
+
+###
+
+# REMOVER MERCADORIA VALIDA
+DELETE {{baseUrl}}/mercadorias/1
+
+###
+
+# REMOVER MERCADORIA INEXISTENTE
+DELETE {{baseUrl}}/mercadorias/999999
+
+###
+
+# REMOVER MERCADORIA ID INVALIDO
+DELETE {{baseUrl}}/mercadorias/abc
+
+###
+
+# REMOVER MERCADORIA ID NEGATIVO
+DELETE {{baseUrl}}/mercadorias/-1
+
+###
+
+# REMOVER MERCADORIA ID ZERO
+DELETE {{baseUrl}}/mercadorias/0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###
+
+# AJUSTAR ESTOQUE ENTRADA (REGRA DE NEGOCIO)
+POST {{baseUrl}}/mercadorias/2/entrada?quantidade=5
+
+###
+
+# AJUSTAR ESTOQUE SAIDA (REGRA DE NEGOCIO)
+POST {{baseUrl}}/mercadorias/2/saida?quantidade=3
+
+###
+
+# CONSUMIR ESTOQUE VALIDO
+POST {{baseUrl}}/mercadorias/2/consumir?quantidade=2
+
+###
+
+# CONSUMIR ESTOQUE INVALIDO (NEGATIVO)
+POST {{baseUrl}}/mercadorias/2/consumir?quantidade=-5
+
+###
+
+# CONSUMIR ESTOQUE INSUFICIENTE
+POST {{baseUrl}}/mercadorias/2/consumir?quantidade=9999
+
+###
+
+# TESTE HATEOAS
+GET {{baseUrl}}/mercadorias/2
+
+###

@@ -1,0 +1,115 @@
+@baseUrl = http://localhost:8080/api
+
+# ASSOCIAR CREDENCIAL VALIDA
+POST {{baseUrl}}/usuarios/1/credenciais
+Content-Type: application/json
+
+{
+  "credencialId": 1
+}
+
+###
+
+# ASSOCIAR CREDENCIAL INEXISTENTE
+POST {{baseUrl}}/usuarios/1/credenciais
+Content-Type: application/json
+
+{
+  "credencialId": 999999
+}
+
+###
+
+# ASSOCIAR CREDENCIAL COM USUARIO INEXISTENTE
+POST {{baseUrl}}/usuarios/999999/credenciais
+Content-Type: application/json
+
+{
+  "credencialId": 1
+}
+
+###
+
+# ASSOCIAR CREDENCIAL COM ID NULO
+POST {{baseUrl}}/usuarios/1/credenciais
+Content-Type: application/json
+
+{
+  "credencialId": null
+}
+
+###
+
+# ASSOCIAR CREDENCIAL SEM ID
+POST {{baseUrl}}/usuarios/1/credenciais
+Content-Type: application/json
+
+{}
+
+###
+
+# ASSOCIAR CREDENCIAL COM JSON INVALIDO
+POST {{baseUrl}}/usuarios/1/credenciais
+Content-Type: application/json
+
+{
+  "credencialId": 1,
+}
+
+###
+
+# ASSOCIAR CREDENCIAL COM CONTENT TYPE INVALIDO
+POST {{baseUrl}}/usuarios/1/credenciais
+Content-Type: text/plain
+
+{
+  "credencialId": 1
+}
+
+###
+
+# ASSOCIAR CREDENCIAL COM ID STRING
+POST {{baseUrl}}/usuarios/1/credenciais
+Content-Type: application/json
+
+{
+  "credencialId": "abc"
+}
+
+###
+
+# ASSOCIAR CREDENCIAL COM ID NEGATIVO
+POST {{baseUrl}}/usuarios/1/credenciais
+Content-Type: application/json
+
+{
+  "credencialId": -1
+}
+
+###
+GET {{baseUrl}}/usuarios/1
+
+###
+
+# DESASSOCIAR CREDENCIAL VALIDA
+DELETE {{baseUrl}}/usuarios/2/credenciais/1
+
+###
+
+# DESASSOCIAR CREDENCIAL INEXISTENTE
+DELETE {{baseUrl}}/usuarios/1/credenciais/999999
+
+###
+
+# DESASSOCIAR CREDENCIAL DE USUARIO INEXISTENTE
+DELETE {{baseUrl}}/usuarios/999999/credenciais/1
+
+###
+
+# DESASSOCIAR CREDENCIAL COM ID INVALIDO
+DELETE {{baseUrl}}/usuarios/1/credenciais/abc
+
+###
+
+# DESASSOCIAR CREDENCIAL COM USUARIO INVALIDO
+DELETE {{baseUrl}}/usuarios/abc/credenciais/1

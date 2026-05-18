@@ -1,0 +1,443 @@
+@baseUrl = http://localhost:8080/api
+
+# CREDENCIAIS
+
+# LISTAR CREDENCIAIS OK
+GET {{baseUrl}}/credenciais
+
+###
+
+# BUSCAR CREDENCIAL EXISTENTE OK
+GET {{baseUrl}}/credenciais/1
+
+###
+
+# BUSCAR CREDENCIAL INEXISTENTE OK
+GET {{baseUrl}}/credenciais/999999
+
+###
+
+# BUSCAR CREDENCIAL COM ID INVALIDO
+GET {{baseUrl}}/credenciais/abc
+
+###
+
+# BUSCAR CREDENCIAL COM ID NEGATIVO
+GET {{baseUrl}}/credenciais/-1
+
+###
+
+# BUSCAR CREDENCIAL COM ID ZERO
+GET {{baseUrl}}/credenciais/0
+
+###
+
+# CRIAR CREDENCIAL VALIDA
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "nomeUsuario": "admin",
+  "senha": "123456"
+}
+
+###
+
+# CRIAR CREDENCIAL INATIVA
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": true,
+  "codigo": 200000
+}
+
+###
+
+# CRIAR CREDENCIAL SEM INATIVO Não sei
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "nomeUsuario": "admin1",
+  "senha": "123456"
+}
+
+###
+
+# CRIAR CREDENCIAL COM INATIVO NULO Não sei
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": null,
+  "nomeUsuario": "",
+  "senha": ""
+}
+
+###
+
+# CRIAR CREDENCIAL COM NOME USUARIO NULO
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "nomeUsuario": null,
+  "senha": "123456"
+}
+
+###
+
+# CRIAR CREDENCIAL COM SENHA NULA
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "nomeUsuario": "admin2",
+  "senha": null
+}
+
+###
+
+# CRIAR CREDENCIAL COM CODIGO NULO OK
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "codigo": null
+}
+
+###
+
+# CRIAR CREDENCIAL COM NOME USUARIO VAZIO
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "nomeUsuario": "",
+  "senha": "123456"
+}
+
+###
+
+# CRIAR CREDENCIAL COM SENHA VAZIA
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "nomeUsuario": "admin",
+  "senha": ""
+}
+
+###
+
+# CRIAR CREDENCIAL COM NOME USUARIO EM BRANCO
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "nomeUsuario": "   ",
+  "senha": "123456"
+}
+
+###
+
+# CRIAR CREDENCIAL COM SENHA EM BRANCO
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "nomeUsuario": "admin",
+  "senha": "   ",
+  "codigo": 10
+}
+
+###
+
+# CRIAR CREDENCIAL COM CODIGO NEGATIVO
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "nomeUsuario": null,
+  "senha": "123456",
+  "codigo": -1
+}
+
+###
+
+# CRIAR CREDENCIAL COM CODIGO ZERO
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "nomeUsuario": "admin",
+  "senha": "123456",
+  "codigo": 0
+}
+
+###
+
+# CRIAR CREDENCIAL COM BODY VAZIO
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{}
+
+###
+
+# CRIAR CREDENCIAL COM JSON INVALIDO
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "nomeUsuario": "admin",
+  "senha": "123456",
+  "codigo": 10,
+}
+
+###
+
+# CRIAR CREDENCIAL COM CONTENT TYPE INVALIDO
+POST {{baseUrl}}/credenciais
+Content-Type: text/plain
+
+{
+  "inativo": false,
+  "nomeUsuario": "admin",
+  "senha": "123456",
+  "codigo": 10
+}
+
+###
+
+# CRIAR CREDENCIAL COM CAMPOS EXTRAS
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "nomeUsuario": "admin",
+  "senha": "123456",
+  "codigo": 10,
+  "extra": "campo-extra"
+}
+
+###
+
+# CRIAR CREDENCIAL COM NOME USUARIO MUITO GRANDE
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "nomeUsuario": "usuario_com_nome_extremamente_grande_para_testar_limites_do_sistema_e_validacoes_de_tamanho",
+  "senha": "123456",
+  "codigo": null
+}
+
+###
+
+# CRIAR CREDENCIAL COM SENHA MUITO GRANDE
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "nomeUsuario": "admin4",
+  "senha": "senha_extremamente_grande_para_testar_limites_do_sistema_e_validacoes_de_tamanho_123456789",
+  "codigo": null
+}
+
+###
+
+# CRIAR CREDENCIAL COM SQL INJECTION
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "nomeUsuario": "' OR '1'='1",
+  "senha": "' OR '1'='1",
+  "codigo": null
+}
+
+###
+
+# CRIAR CREDENCIAL COM XSS
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "nomeUsuario": "<script>alert('xss')</script>",
+  "senha": "<script>alert('xss')</script>",
+  "codigo": null
+}
+
+###
+
+# CRIAR CREDENCIAL COM CODIGO STRING
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": false,
+  "nomeUsuario": "admin",
+  "senha": "123456",
+  "codigo": "abc"
+}
+
+###
+
+# CRIAR CREDENCIAL COM INATIVO STRING
+POST {{baseUrl}}/credenciais
+Content-Type: application/json
+
+{
+  "inativo": "false",
+  "nomeUsuario": "outro",
+  "senha": "123456",
+  "codigo": 
+}
+
+###
+
+# ATUALIZAR CREDENCIAL VALIDA OK
+PUT {{baseUrl}}/credenciais/1
+Content-Type: application/json
+
+{
+  "inativo": true
+}
+
+###
+
+# ATUALIZAR CREDENCIAL PARA ATIVA OK
+PUT {{baseUrl}}/credenciais/1
+Content-Type: application/json
+
+{
+  "inativo": false
+}
+
+###
+
+# ATUALIZAR CREDENCIAL INEXISTENTE OK
+PUT {{baseUrl}}/credenciais/999999
+Content-Type: application/json
+
+{
+  "inativo": true
+}
+
+###
+
+# ATUALIZAR CREDENCIAL COM ID INVALIDO
+PUT {{baseUrl}}/credenciais/abc
+Content-Type: application/json
+
+{
+  "inativo": true
+}
+
+###
+
+# ATUALIZAR CREDENCIAL COM ID NEGATIVO
+PUT {{baseUrl}}/credenciais/-1
+Content-Type: application/json
+
+{
+  "inativo": true
+}
+
+###
+
+# ATUALIZAR CREDENCIAL COM ID ZERO
+PUT {{baseUrl}}/credenciais/0
+Content-Type: application/json
+
+{
+  "inativo": true
+}
+
+###
+
+# ATUALIZAR CREDENCIAL SEM INATIVO
+PUT {{baseUrl}}/credenciais/1
+Content-Type: application/json
+
+{}
+
+###
+
+# ATUALIZAR CREDENCIAL COM INATIVO NULO
+PUT {{baseUrl}}/credenciais/1
+Content-Type: application/json
+
+{
+  "inativo": null
+}
+
+###
+
+# ATUALIZAR CREDENCIAL COM INATIVO STRING OK
+PUT {{baseUrl}}/credenciais/1
+Content-Type: application/json
+
+{
+  "inativo": "false"
+}
+
+###
+
+# ATUALIZAR CREDENCIAL COM JSON INVALIDO 
+PUT {{baseUrl}}/credenciais/1
+Content-Type: application/json
+
+{
+  "inativo": true,
+}
+
+###
+
+# ATUALIZAR CREDENCIAL COM CONTENT TYPE INVALIDO
+PUT {{baseUrl}}/credenciais/1
+Content-Type: text/plain
+
+{
+  "inativo": true
+}
+
+###
+
+# REMOVER CREDENCIAL EXISTENTE
+DELETE {{baseUrl}}/credenciais/1
+
+###
+
+# REMOVER CREDENCIAL INEXISTENTE
+DELETE {{baseUrl}}/credenciais/999999
+
+###
+
+# REMOVER CREDENCIAL COM ID INVALIDO
+DELETE {{baseUrl}}/credenciais/abc
+
+###
+
+# REMOVER CREDENCIAL COM ID NEGATIVO
+DELETE {{baseUrl}}/credenciais/-1
+
+###

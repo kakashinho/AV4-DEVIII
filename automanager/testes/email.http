@@ -1,0 +1,111 @@
+@baseUrl = http://localhost:8080/api
+
+# EMAILS
+
+# LISTAR EMAILS OK
+GET {{baseUrl}}/emails
+
+###
+
+# BUSCAR EMAIL EXISTENTE OK
+GET {{baseUrl}}/emails/1
+
+###
+
+# BUSCAR EMAIL INEXISTENTE OK
+GET {{baseUrl}}/emails/999999
+
+###
+
+# BUSCAR EMAIL COM ID INVALIDO 
+GET {{baseUrl}}/emails/abc
+
+###
+
+# CRIAR EMAIL VALIDO OK
+POST {{baseUrl}}/emails
+Content-Type: application/json
+
+{
+  "endereco": "teste@email.com"
+}
+
+###
+
+# CRIAR EMAIL INVALIDO OK
+POST {{baseUrl}}/emails
+Content-Type: application/json
+
+{
+  "endereco": "email-invalido"
+}
+
+###
+
+# CRIAR EMAIL VAZIO OK
+POST {{baseUrl}}/emails
+Content-Type: application/json
+
+{
+  "endereco": ""
+}
+
+###
+
+# CRIAR EMAIL COM BODY VAZIO OK
+POST {{baseUrl}}/emails
+Content-Type: application/json
+
+{}
+
+###
+
+# CRIAR EMAIL COM JSON INVALIDO
+POST {{baseUrl}}/emails
+Content-Type: application/json
+
+{
+  "endereco": "teste@email.com",
+}
+
+###
+
+# CRIAR EMAIL COM CONTENT TYPE ERRADO
+POST {{baseUrl}}/emails
+Content-Type: text/plain
+
+{
+  "endereco": "teste@email.com"
+}
+
+###
+
+# ATUALIZAR EMAIL VALIDO
+PUT {{baseUrl}}/emails/1
+Content-Type: application/json
+
+{
+  "endereco": "novo@email.com"
+}
+
+###
+
+# ATUALIZAR EMAIL INVALIDO
+PUT {{baseUrl}}/emails/1
+Content-Type: application/json
+
+{
+  "endereco": "abc"
+}
+
+###
+
+# REMOVER EMAIL EXISTENTE
+DELETE {{baseUrl}}/emails/1
+Content-Type: application/json
+
+
+###
+
+# REMOVER EMAIL INEXISTENTE OK
+DELETE {{baseUrl}}/emails/999999

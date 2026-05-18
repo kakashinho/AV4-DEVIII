@@ -1,0 +1,127 @@
+@baseUrl = http://localhost:8080/api
+
+# DOCUMENTO
+
+# LISTAR DOCUMENTO OK
+GET {{baseUrl}}/documentos
+
+###
+
+# BUSCAR DOCUMENTO EXISTENTE OK
+GET {{baseUrl}}/documentos/2
+
+###
+
+# ASSOCIAR DOCUMENTO VALIDO
+POST {{baseUrl}}/usuarios/2/documentos
+Content-Type: application/json
+
+{
+  "documentoId": 2
+}
+
+###
+
+# ASSOCIAR DOCUMENTO INEXISTENTE
+POST {{baseUrl}}/usuarios/1/documentos
+Content-Type: application/json
+
+{
+  "documentoId": 999999
+}
+
+###
+
+# ASSOCIAR DOCUMENTO COM USUARIO INEXISTENTE
+POST {{baseUrl}}/usuarios/999999/documentos
+Content-Type: application/json
+
+{
+  "documentoId": 1
+}
+
+###
+
+# ASSOCIAR DOCUMENTO COM ID NULO
+POST {{baseUrl}}/usuarios/1/documentos
+Content-Type: application/json
+
+{
+  "documentoId": null
+}
+
+###
+
+# ASSOCIAR DOCUMENTO SEM ID
+POST {{baseUrl}}/usuarios/1/documentos
+Content-Type: application/json
+
+{}
+
+###
+
+# ASSOCIAR DOCUMENTO COM JSON INVALIDO
+POST {{baseUrl}}/usuarios/1/documentos
+Content-Type: application/json
+
+{
+  "documentoId": 1,
+}
+
+###
+
+# ASSOCIAR DOCUMENTO COM CONTENT TYPE INVALIDO
+POST {{baseUrl}}/usuarios/1/documentos
+Content-Type: text/plain
+
+{
+  "documentoId": 1
+}
+
+###
+
+# ASSOCIAR DOCUMENTO COM ID STRING
+POST {{baseUrl}}/usuarios/1/documentos
+Content-Type: application/json
+
+{
+  "documentoId": "abc"
+}
+
+###
+
+# ASSOCIAR DOCUMENTO COM ID NEGATIVO
+POST {{baseUrl}}/usuarios/1/documentos
+Content-Type: application/json
+
+{
+  "documentoId": -1
+}
+
+###
+GET {{baseUrl}}/usuarios/1
+
+###
+
+# DESASSOCIAR DOCUMENTO VALIDO
+DELETE {{baseUrl}}/usuarios/1/documentos/2
+
+###
+
+# DESASSOCIAR DOCUMENTO INEXISTENTE
+DELETE {{baseUrl}}/usuarios/1/documentos/999999
+
+###
+
+# DESASSOCIAR DOCUMENTO DE USUARIO INEXISTENTE
+DELETE {{baseUrl}}/usuarios/999999/documentos/1
+
+###
+
+# DESASSOCIAR DOCUMENTO COM ID INVALIDO
+DELETE {{baseUrl}}/usuarios/1/documentos/abc
+
+###
+
+# DESASSOCIAR DOCUMENTO COM USUARIO INVALIDO
+DELETE {{baseUrl}}/usuarios/abc/documentos/1

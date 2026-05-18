@@ -1,0 +1,354 @@
+@baseUrl = http://localhost:8080/api
+
+# TELEFONES
+
+# LISTAR TELEFONES OK
+GET {{baseUrl}}/telefones
+
+###
+
+# BUSCAR TELEFONE EXISTENTE OK
+GET {{baseUrl}}/telefones/1
+
+###
+
+# BUSCAR TELEFONE INEXISTENTE OK
+GET {{baseUrl}}/telefones/999999
+
+###
+
+# BUSCAR TELEFONE COM ID INVALIDO
+GET {{baseUrl}}/telefones/abc
+
+###
+
+# BUSCAR TELEFONE COM ID NEGATIVO
+GET {{baseUrl}}/telefones/-1
+
+###
+
+# BUSCAR TELEFONE COM ID ZERO
+GET {{baseUrl}}/telefones/0
+
+###
+
+# CRIAR TELEFONE VALIDO OK
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": "12",
+  "numero": "999999999"
+}
+
+###
+
+# CRIAR TELEFONE COM DDD VAZIO OK
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": "",
+  "numero": "999999999"
+}
+
+###
+
+# CRIAR TELEFONE COM NUMERO VAZIO OK
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": "12",
+  "numero": ""
+}
+
+###
+
+# CRIAR TELEFONE COM DDD NULO OK
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": null,
+  "numero": "999999999"
+}
+
+###
+
+# CRIAR TELEFONE COM NUMERO NULO OK
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": "12",
+  "numero": null
+}
+
+###
+
+# CRIAR TELEFONE COM DDD EM BRANCO OK
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": "   ",
+  "numero": "999999999"
+}
+
+###
+
+# CRIAR TELEFONE COM NUMERO EM BRANCO OK
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": "12",
+  "numero": "   "
+}
+
+###
+
+# CRIAR TELEFONE SEM DDD OK
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "numero": "999999999"
+}
+
+###
+
+# CRIAR TELEFONE SEM NUMERO OK
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": "12"
+}
+
+###
+
+# CRIAR TELEFONE COM BODY VAZIO OK
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{}
+
+###
+
+# CRIAR TELEFONE COM JSON INVALIDO
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": "12",
+  "numero": "999999999",
+}
+
+###
+
+# CRIAR TELEFONE COM CONTENT TYPE INVALIDO
+POST {{baseUrl}}/telefones
+Content-Type: text/plain
+
+{
+  "ddd": "12",
+  "numero": "999999999"
+}
+
+###
+
+# CRIAR TELEFONE COM DDD NUMERICO OK
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": 12,
+  "numero": "999999998"
+}
+
+###
+
+# CRIAR TELEFONE COM NUMERO NUMERICO OK
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": "12",
+  "numero": 999999989
+}
+
+###
+
+# CRIAR TELEFONE COM CAMPOS EXTRAS OK
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": "12",
+  "numero": "999999969",
+  "extra": "campo-extra"
+}
+
+###
+
+# CRIAR TELEFONE COM DDD MUITO GRANDE
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": "123456789",
+  "numero": "999999999"
+}
+
+###
+
+# CRIAR TELEFONE COM NUMERO MUITO GRANDE
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": "12",
+  "numero": "999999999999999999999999"
+}
+
+###
+
+# CRIAR TELEFONE COM CARACTERES ESPECIAIS
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": "@#",
+  "numero": "99999-9999"
+}
+
+###
+
+# CRIAR TELEFONE COM LETRAS
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": "ab",
+  "numero": "telefone"
+}
+
+###
+
+# CRIAR TELEFONE COM SQL INJECTION
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": "12",
+  "numero": "' OR '1'='1"
+}
+
+###
+
+# CRIAR TELEFONE COM XSS
+POST {{baseUrl}}/telefones
+Content-Type: application/json
+
+{
+  "ddd": "12",
+  "numero": "<script>alert('xss')</script>"
+}
+
+###
+
+# ATUALIZAR TELEFONE VALIDO OK
+PUT {{baseUrl}}/telefones/2
+Content-Type: application/json
+
+{
+  "ddd": "11",
+  "numero": "988888888"
+}
+
+###
+
+# ATUALIZAR TELEFONE INEXISTENTE OK
+PUT {{baseUrl}}/telefones/999999
+Content-Type: application/json
+
+{
+  "ddd": "11",
+  "numero": "988888888"
+}
+
+###
+
+# ATUALIZAR TELEFONE COM ID INVALIDO
+PUT {{baseUrl}}/telefones/abc
+Content-Type: application/json
+
+{
+  "ddd": "11",
+  "numero": "988888888"
+}
+
+###
+
+# ATUALIZAR TELEFONE COM BODY VAZIO
+PUT {{baseUrl}}/telefones/1
+Content-Type: application/json
+
+{}
+
+###
+
+# ATUALIZAR TELEFONE COM DDD NULO
+PUT {{baseUrl}}/telefones/1
+Content-Type: application/json
+
+{
+  "ddd": null,
+  "numero": "988888888"
+}
+
+###
+
+# ATUALIZAR TELEFONE COM NUMERO NULO
+PUT {{baseUrl}}/telefones/1
+Content-Type: application/json
+
+{
+  "ddd": "11",
+  "numero": null
+}
+
+###
+
+# ATUALIZAR TELEFONE COM JSON INVALIDO
+PUT {{baseUrl}}/telefones/1
+Content-Type: application/json
+
+{
+  "ddd": "11",
+  "numero": "988888888",
+}
+
+###
+
+# REMOVER TELEFONE EXISTENTE
+DELETE {{baseUrl}}/telefones/1
+
+###
+
+# REMOVER TELEFONE INEXISTENTE
+DELETE {{baseUrl}}/telefones/999999
+
+###
+
+# REMOVER TELEFONE COM ID INVALIDO
+DELETE {{baseUrl}}/telefones/abc
+
+###
+
+# REMOVER TELEFONE COM ID NEGATIVO
+DELETE {{baseUrl}}/telefones/-1
+
+###
