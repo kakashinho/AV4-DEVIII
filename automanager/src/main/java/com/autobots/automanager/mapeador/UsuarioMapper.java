@@ -80,6 +80,7 @@ public class UsuarioMapper {
     }
 
     public UsuarioReferencia paraReferencia(Usuario usuario) {
+        //boolean strictMapping = true;
         UsuarioReferencia ref = new UsuarioReferencia();
         ref.setId(usuario.getId());
         ref.setNome(usuario.getNome());

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,67 +17,48 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.autobots.automanager.dto.EmpresaResumo;
 import com.autobots.automanager.dto.requisicao.EmpresaRequest;
+import com.autobots.automanager.dto.requisicao.EmpresaUpdateRequest;
+import com.autobots.automanager.dto.requisicao.MercadoriaRequest;
+import com.autobots.automanager.dto.requisicao.ServicoRequest;
+import com.autobots.automanager.dto.requisicao.VendaRequest;
 import com.autobots.automanager.dto.resposta.EmpresaResponse;
+import com.autobots.automanager.dto.resposta.MercadoriaResponse;
+import com.autobots.automanager.dto.resposta.ServicoResponse;
 import com.autobots.automanager.dto.resposta.UsuarioReferencia;
-import com.autobots.automanager.dto.resposta.VeiculoResponse;
 import com.autobots.automanager.dto.resposta.VendaResponse;
-import com.autobots.automanager.entidade.Empresa;
-import com.autobots.automanager.entidade.Usuario;
-import com.autobots.automanager.entidade.Veiculo;
 import com.autobots.automanager.entidade.Venda;
+import com.autobots.automanager.enumeracao.PerfilUsuario;
 import com.autobots.automanager.hateaos.EmpresaAssembler;
-import com.autobots.automanager.hateaos.VeiculoAssembler;
+import com.autobots.automanager.hateaos.MercadoriaAssembler;
+import com.autobots.automanager.hateaos.ServicoAssembler;
 import com.autobots.automanager.hateaos.VendaAssembler;
-import com.autobots.automanager.mapeador.VeiculoMapper;
 import com.autobots.automanager.mapeador.VendaMapper;
-import com.autobots.automanager.repositorio.RepositorioUsuario;
-import com.autobots.automanager.repositorio.RepositorioVeiculo;
-import com.autobots.automanager.repositorio.RepositorioVenda;
 import com.autobots.automanager.servico.EmpresaService;
 
-import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/empresas")
 public class EmpresaController {
 
-    @Autowired
-    private EmpresaService empresaService;
+    @Autowired private EmpresaService empresaService;
+    @Autowired private EmpresaAssembler empresaAssembler;
+    @Autowired private MercadoriaAssembler mercadoriaAssembler;
+    @Autowired private ServicoAssembler servicoAssembler;
+    @Autowired private VendaMapper vendaMapper;
+    @Autowired private VendaAssembler vendaAssembler;
 
-    @Autowired
-    private EmpresaAssembler empresaAssembler;
-
-    @Autowired
-    private RepositorioUsuario usuarioRepo;
-
-    @Autowired
-    private RepositorioVeiculo veiculoRepo;
-
-    @Autowired
-    private RepositorioVenda vendaRepo;
-
-    @Autowired
-    private VeiculoMapper veiculoMapper;
-
-    @Autowired
-    private VeiculoAssembler veiculoAssembler;
-
-    @Autowired
-    private VendaMapper vendaMapper;
-
-    @Autowired
-    private VendaAssembler vendaAssembler;
+    // ─── CRUD principal ───────────────────────────────────────────────────────
 
     @GetMapping
     public ResponseEntity<CollectionModel<EntityModel<EmpresaResumo>>> listar() {
-        List<EmpresaResumo> resumos = empresaService.listarTodas();
-        List<EntityModel<EmpresaResumo>> models = resumos.stream()
+        List<EntityModel<EmpresaResumo>> models = empresaService.listarTodas().stream()
                 .map(resumo -> {
                     EntityModel<EmpresaResumo> model = EntityModel.of(resumo);
                     empresaAssembler.addResumoLinks(model, resumo.getId());
@@ -110,7 +92,7 @@ public class EmpresaController {
 
     @PutMapping("/{id}")
     public ResponseEntity<EntityModel<EmpresaResponse>> atualizar(
-            @PathVariable Long id, @Valid @RequestBody EmpresaRequest request) {
+            @PathVariable Long id, @Valid @RequestBody EmpresaUpdateRequest request) {
         EmpresaResponse response = empresaService.atualizar(id, request);
         EntityModel<EmpresaResponse> model = EntityModel.of(response);
         empresaAssembler.addDetailLinks(model, id);
@@ -123,12 +105,15 @@ public class EmpresaController {
         return ResponseEntity.noContent().build();
     }
 
+    // ─── Sub-recurso: usuários ────────────────────────────────────────────────
+
     @GetMapping("/{id}/usuarios")
     public ResponseEntity<CollectionModel<EntityModel<UsuarioReferencia>>> listarUsuarios(
-            @PathVariable Long id) {
-        Set<UsuarioReferencia> usuarios = empresaService.listarUsuarios(id);
+            @PathVariable Long id,
+            @RequestParam(required = false) PerfilUsuario perfil) {
+        Set<UsuarioReferencia> usuarios = empresaService.listarUsuarios(id, perfil);
         List<EntityModel<UsuarioReferencia>> models = usuarios.stream()
-                .map(ref -> EntityModel.of(ref))
+                .map(EntityModel::of)
                 .collect(Collectors.toList());
 
         CollectionModel<EntityModel<UsuarioReferencia>> collection = CollectionModel.of(models);
@@ -150,22 +135,107 @@ public class EmpresaController {
         return ResponseEntity.noContent().build();
     }
 
+    // ─── Sub-recurso: mercadorias ─────────────────────────────────────────────
+
+    @GetMapping("/{id}/mercadorias")
+    public ResponseEntity<CollectionModel<EntityModel<MercadoriaResponse>>> listarMercadorias(
+            @PathVariable Long id) {
+        List<EntityModel<MercadoriaResponse>> models = empresaService.listarMercadorias(id).stream()
+                .map(mercadoriaAssembler::toModel)
+                .collect(Collectors.toList());
+        CollectionModel<EntityModel<MercadoriaResponse>> collection = CollectionModel.of(models);
+        empresaAssembler.addMercadoriasLinks(collection, id);
+        return ResponseEntity.ok(collection);
+    }
+
+    @PostMapping("/{id}/mercadorias")
+    public ResponseEntity<EntityModel<MercadoriaResponse>> criarMercadoria(
+            @PathVariable Long id, @Valid @RequestBody MercadoriaRequest request) {
+        MercadoriaResponse response = empresaService.criarMercadoria(id, request);
+        EntityModel<MercadoriaResponse> model = mercadoriaAssembler.toModel(response);
+        URI location = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/api/mercadorias/{id}").buildAndExpand(response.getId()).toUri();
+        return ResponseEntity.created(location).body(model);
+    }
+
+    @PostMapping("/{id}/mercadorias/{mercadoriaId}")
+    public ResponseEntity<EntityModel<MercadoriaResponse>> associarMercadoria(
+            @PathVariable Long id, @PathVariable Long mercadoriaId) {
+        MercadoriaResponse response = empresaService.associarMercadoria(id, mercadoriaId);
+        EntityModel<MercadoriaResponse> model = mercadoriaAssembler.toModel(response);
+        return ResponseEntity.ok(model);
+    }
+
+    @DeleteMapping("/{id}/mercadorias/{mercadoriaId}")
+    public ResponseEntity<Void> desassociarMercadoria(
+            @PathVariable Long id, @PathVariable Long mercadoriaId) {
+        empresaService.desassociarMercadoria(id, mercadoriaId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ─── Sub-recurso: serviços ────────────────────────────────────────────────
+
+    @GetMapping("/{id}/servicos")
+    public ResponseEntity<CollectionModel<EntityModel<ServicoResponse>>> listarServicos(
+            @PathVariable Long id) {
+        List<EntityModel<ServicoResponse>> models = empresaService.listarServicos(id).stream()
+                .map(servicoAssembler::toModel)
+                .collect(Collectors.toList());
+        CollectionModel<EntityModel<ServicoResponse>> collection = CollectionModel.of(models);
+        empresaAssembler.addServicosLinks(collection, id);
+        return ResponseEntity.ok(collection);
+    }
+
+    @PostMapping("/{id}/servicos")
+    public ResponseEntity<EntityModel<ServicoResponse>> criarServico(
+            @PathVariable Long id, @Valid @RequestBody ServicoRequest request) {
+        ServicoResponse response = empresaService.criarServico(id, request);
+        EntityModel<ServicoResponse> model = servicoAssembler.toModel(response);
+        URI location = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/api/servicos/{id}").buildAndExpand(response.getId()).toUri();
+        return ResponseEntity.created(location).body(model);
+    }
+
+    @DeleteMapping("/{id}/servicos/{servicoId}")
+    public ResponseEntity<Void> removerServico(
+            @PathVariable Long id, @PathVariable Long servicoId) {
+        empresaService.removerServico(id, servicoId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ─── Sub-recurso: vendas ──────────────────────────────────────────────────
+
     @GetMapping("/{empresaId}/vendas")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<VendaResponse>> listarVendasDaEmpresa(
+    public ResponseEntity<CollectionModel<VendaResponse>> listarVendasDaEmpresa(
             @PathVariable Long empresaId) {
-        Empresa empresa = empresaService.obterEmpresa(empresaId);
-        Set<Usuario> usuarios = empresa.getUsuarios();
-
-        List<Venda> vendas = vendaRepo.findAll().stream()
-                .filter(v -> usuarios.contains(v.getCliente()) ||
-                             usuarios.contains(v.getFuncionario()))
-                .collect(Collectors.toList());
-
+        List<Venda> vendas = empresaService.listarVendas(empresaId);
         List<VendaResponse> responses = vendas.stream()
                 .map(vendaMapper::toResponse)
                 .map(vendaAssembler::toModel)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+        CollectionModel<VendaResponse> collection = CollectionModel.of(responses);
+        empresaAssembler.addVendasLinks(collection, empresaId);
+        return ResponseEntity.ok(collection);
+    }
+
+    @GetMapping("/{empresaId}/vendas/{vendaId}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<VendaResponse> obterVendaDaEmpresa(
+            @PathVariable Long empresaId, @PathVariable Long vendaId) {
+        Venda venda = empresaService.obterVenda(empresaId, vendaId);
+        VendaResponse response = vendaAssembler.toModel(vendaMapper.toResponse(venda));
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{empresaId}/vendas")
+    public ResponseEntity<VendaResponse> criarVendaDaEmpresa(
+            @PathVariable Long empresaId, @Valid @RequestBody VendaRequest request) {
+        Venda venda = empresaService.criarVenda(empresaId, request);
+        VendaResponse response = vendaAssembler.toModel(vendaMapper.toResponse(venda));
+        URI location = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/api/empresas/{empresaId}/vendas/{vendaId}")
+                .buildAndExpand(empresaId, venda.getId()).toUri();
+        return ResponseEntity.created(location).body(response);
     }
 }

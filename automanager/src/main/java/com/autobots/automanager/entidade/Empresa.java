@@ -41,7 +41,7 @@ public class Empresa {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     private Endereco endereco;
 
-    @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "empresa", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Set<Usuario> usuarios = new HashSet<>();
 
     @OneToMany(mappedBy = "empresa")

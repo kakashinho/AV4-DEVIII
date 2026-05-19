@@ -10,8 +10,10 @@ import lombok.Data;
 
 @Data
 public class EmpresaRequest {
-    @NotBlank
+
+    @NotBlank(message = "Razão social é obrigatória")
     private String razaoSocial;
+
     private String nomeFantasia;
 
     @Valid
@@ -19,11 +21,6 @@ public class EmpresaRequest {
 
     @Valid
     private Set<TelefoneRequest> telefones;
-
-    private Set<Long> usuariosIds;
-
-    private Set<Long> mercadoriasIds;
-    private Set<Long> servicosIds;
 
     public String getRazaoSocial() {
         return razaoSocial;
@@ -41,18 +38,6 @@ public class EmpresaRequest {
         return telefones;
     }
 
-    public Set<Long> getUsuariosIds() {
-        return usuariosIds;
-    }
-
-    public Set<Long> getMercadoriasIds() {
-        return mercadoriasIds;
-    }
-
-    public Set<Long> getServicosIds() {
-        return servicosIds;
-    }
-
     public void setRazaoSocial(String razaoSocial) {
         this.razaoSocial = razaoSocial;
     }
@@ -68,17 +53,4 @@ public class EmpresaRequest {
     public void setTelefones(Set<TelefoneRequest> telefones) {
         this.telefones = telefones;
     }
-
-    public void setUsuariosIds(Set<Long> usuariosIds) {
-        this.usuariosIds = usuariosIds;
-    }
-
-    public void setMercadoriasIds(Set<Long> mercadoriasIds) {
-        this.mercadoriasIds = mercadoriasIds;
-    }
-
-    public void setServicosIds(Set<Long> servicosIds) {
-        this.servicosIds = servicosIds;
-    }
-
 }

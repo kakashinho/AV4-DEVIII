@@ -148,6 +148,11 @@ public class ManipuladorGlobalExcecoes {
         return construirResposta(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
+    @ExceptionHandler(MercadoriaNaoEncontradaException.class)
+    public ResponseEntity<ResponsePadrao<Object>> handleMercadoriaNaoEncontrada(MercadoriaNaoEncontradaException ex) {
+        return construirResposta(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
     @ExceptionHandler(UsuarioNaoAssociadoException.class)
     public ResponseEntity<ResponsePadrao<Object>> handleUsuarioNaoAssociado(UsuarioNaoAssociadoException ex) {
         return construirResposta(HttpStatus.NOT_FOUND, ex.getMessage());
@@ -202,6 +207,16 @@ public class ManipuladorGlobalExcecoes {
 
     @ExceptionHandler(VeiculoBloqueadoException.class)
     public ResponseEntity<ResponsePadrao<Object>> handleVeiculoBloqueado(VeiculoBloqueadoException ex) {
+        return construirResposta(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(EmpresaComVendasException.class)
+    public ResponseEntity<ResponsePadrao<Object>> handleEmpresaComVendas(EmpresaComVendasException ex) {
+        return construirResposta(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(MercadoriaEmUsoException.class)
+    public ResponseEntity<ResponsePadrao<Object>> handleMercadoriaEmUso(MercadoriaEmUsoException ex) {
         return construirResposta(HttpStatus.CONFLICT, ex.getMessage());
     }
 

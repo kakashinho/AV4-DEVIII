@@ -1,11 +1,13 @@
 package com.autobots.automanager.repositorio;
 
 import com.autobots.automanager.entidade.Usuario;
+import com.autobots.automanager.enumeracao.PerfilUsuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -25,6 +27,12 @@ public interface RepositorioUsuario extends JpaRepository<Usuario, Long> {
     boolean existsByDocumentosNumero(String numeroDocumento);
     boolean existsByEmailsEndereco(String email);
     boolean existsByTelefonesDddAndTelefonesNumero(String ddd, String numero);
+
+    List<Usuario> findByEmpresaId(Long empresaId);
+
+    List<Usuario> findByEmpresaIdAndPerfisContaining(Long empresaId, PerfilUsuario perfil);
+
+    long countByEmpresaId(Long empresaId);
 
     @Query("""
         select case when count(u) > 0 then true else false end

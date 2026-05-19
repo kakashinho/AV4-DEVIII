@@ -1,0 +1,873 @@
+@baseUrl = http://localhost:8080/api
+
+# =========================================================
+# EMPRESA - TESTES COMPLETOS (CRUD + SUB-RECURSOS + ERROS)
+# =========================================================
+# Dados pré-carregados (AutomanagerApplication.run):
+#   empresa id=1  (Car service toyota ltda)
+#   usuario id=1  FUNCIONARIO Pedro Alcântara
+#   usuario id=2  FORNECEDOR  Fornecedor Auto
+#   usuario id=3  CLIENTE     Cliente
+#   mercadoria id=1 Roda Toyota
+#   mercadoria id=2 Roda genérica
+#   servico id=1 Troca de rodas
+#   servico id=2 Alinhamento
+#   servico id=3 Balanceamento
+#   veiculo id=1 Corolla Cross (proprietário=usuario 3)
+#   venda id=1, venda id=2 (vinculadas à empresa 1)
+# =========================================================
+
+
+# =========================
+# CRUD PRINCIPAL
+# =========================
+
+# LISTAR EMPRESAS OK
+GET {{baseUrl}}/empresas
+
+###
+
+# BUSCAR EMPRESA EXISTENTE OK
+GET {{baseUrl}}/empresas/1
+
+###
+
+# BUSCAR EMPRESA INEXISTENTE (404)
+GET {{baseUrl}}/empresas/999999
+
+###
+
+# BUSCAR EMPRESA COM ID INVALIDO (400)
+GET {{baseUrl}}/empresas/abc
+
+###
+
+# BUSCAR EMPRESA COM ID NEGATIVO
+GET {{baseUrl}}/empresas/-1
+
+###
+
+# BUSCAR EMPRESA COM ID ZERO
+GET {{baseUrl}}/empresas/0
+
+###
+
+
+# =========================
+# CRIAR EMPRESA - VÁLIDOS
+# =========================
+
+# CRIAR EMPRESA COMPLETA OK (201)
+POST {{baseUrl}}/empresas
+Content-Type: application/json
+
+{
+  "razaoSocial": "AutoPeças Centro LTDA",
+  "nomeFantasia": "AutoPeças Centro",
+  "endereco": {
+    "estado": "SP",
+    "cidade": "Campinas",
+    "bairro": "Centro",
+    "rua": "Rua das Flores",
+    "numero": "123",
+    "codigoPostal": "13010-000"
+  },
+  "telefones": [
+    { "ddd": "19", "numero": "33334444" }
+  ]
+}
+
+###
+
+# CRIAR EMPRESA SÓ COM RAZAO SOCIAL OK (201)
+POST {{baseUrl}}/empresas
+Content-Type: application/json
+
+{
+  "razaoSocial": "Mínima LTDA"
+}
+
+###
+
+# CRIAR EMPRESA COM MÚLTIPLOS TELEFONES
+POST {{baseUrl}}/empresas
+Content-Type: application/json
+
+{
+  "razaoSocial": "Multi Tel LTDA",
+  "nomeFantasia": "Multi Tel",
+  "telefones": [
+    { "ddd": "11", "numero": "999999991" },
+    { "ddd": "11", "numero": "999999991" }
+  ]
+}
+
+###
+
+
+# =========================
+# CRIAR EMPRESA - ERROS DE VALIDAÇÃO
+# =========================
+
+# CRIAR SEM RAZAO SOCIAL (400)
+POST {{baseUrl}}/empresas
+Content-Type: application/json
+
+{
+  "nomeFantasia": "Sem razão"
+}
+
+###
+
+# CRIAR COM RAZAO SOCIAL VAZIA (400)
+POST {{baseUrl}}/empresas
+Content-Type: application/json
+
+{
+  "razaoSocial": ""
+}
+
+###
+
+# CRIAR COM RAZAO SOCIAL EM BRANCO (400)
+POST {{baseUrl}}/empresas
+Content-Type: application/json
+
+{
+  "razaoSocial": "   "
+}
+
+###
+
+# CRIAR COM RAZAO SOCIAL NULA (400)
+POST {{baseUrl}}/empresas
+Content-Type: application/json
+
+{
+  "razaoSocial": null,
+  "nomeFantasia": "Algo"
+}
+
+###
+
+# CRIAR COM BODY VAZIO (400)
+POST {{baseUrl}}/empresas
+Content-Type: application/json
+
+{}
+
+###
+
+# CRIAR SEM BODY (400)
+POST {{baseUrl}}/empresas
+Content-Type: application/json
+
+###
+
+# CRIAR COM JSON INVALIDO (400)
+POST {{baseUrl}}/empresas
+Content-Type: application/json
+
+{
+  "razaoSocial": "Teste",
+}
+
+###
+
+# CRIAR COM CONTENT-TYPE INVALIDO (415)
+POST {{baseUrl}}/empresas
+Content-Type: text/plain
+
+{
+  "razaoSocial": "Teste"
+}
+
+###
+
+# CRIAR COM TELEFONE INVALIDO (DDD VAZIO) (400)
+POST {{baseUrl}}/empresas
+Content-Type: application/json
+
+{
+  "razaoSocial": "Teste Tel",
+  "telefones": [
+    { "ddd": "", "numero": "999999999" }
+  ]
+}
+
+###
+
+# CRIAR COM CAMPOS EXTRAS (devem ser ignorados)
+POST {{baseUrl}}/empresas
+Content-Type: application/json
+
+{
+  "razaoSocial": "Com Extras LTDA",
+  "extra": "deve-ser-ignorado",
+  "campoFake": 123
+}
+
+###
+
+
+# =========================
+# ATUALIZAR (PUT PARCIAL)
+# =========================
+
+# ATUALIZAR SÓ NOME FANTASIA (PUT PARCIAL) (200)
+PUT {{baseUrl}}/empresas/1
+Content-Type: application/json
+
+{
+  "nomeFantasia": "Car Service - Nome Atualizado"
+}
+
+###
+
+# ATUALIZAR SÓ RAZAO SOCIAL (PUT PARCIAL) (200)
+PUT {{baseUrl}}/empresas/1
+Content-Type: application/json
+
+{
+  "razaoSocial": "Car Service Toyota LTDA - ME"
+}
+
+###
+
+# ATUALIZAR ENDERECO (substitui o endereço inteiro)
+PUT {{baseUrl}}/empresas/1
+Content-Type: application/json
+
+{
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São Paulo",
+    "bairro": "Vila Mariana",
+    "rua": "Rua Domingos de Morais",
+    "numero": "1500",
+    "codigoPostal": "04010-100"
+  }
+}
+
+###
+
+# ATUALIZAR TELEFONES (substitui lista)
+PUT {{baseUrl}}/empresas/1
+Content-Type: application/json
+
+{
+  "telefones": [
+    { "ddd": "11", "numero": "988887777" },
+    { "ddd": "11", "numero": "988886666" }
+  ]
+}
+
+###
+
+# ATUALIZAR LIMPANDO TELEFONES (lista vazia)
+PUT {{baseUrl}}/empresas/1
+Content-Type: application/json
+
+{
+  "telefones": []
+}
+
+###
+
+# ATUALIZAR COM BODY VAZIO (200 — nada muda)
+PUT {{baseUrl}}/empresas/1
+Content-Type: application/json
+
+{}
+
+###
+
+# ATUALIZAR EMPRESA INEXISTENTE (404)
+PUT {{baseUrl}}/empresas/999999
+Content-Type: application/json
+
+{
+  "nomeFantasia": "Não existe"
+}
+
+###
+
+# ATUALIZAR ID INVALIDO (400)
+PUT {{baseUrl}}/empresas/abc
+Content-Type: application/json
+
+{
+  "nomeFantasia": "X"
+}
+
+###
+
+# ATUALIZAR COM JSON INVALIDO (400)
+PUT {{baseUrl}}/empresas/1
+Content-Type: application/json
+
+{
+  "razaoSocial": "Teste",
+}
+
+###
+
+
+# =========================
+# DELETE
+# =========================
+
+# DELETE EMPRESA COM VENDAS (deve dar 409 — empresa 1 tem vendas no seed)
+DELETE {{baseUrl}}/empresas/1
+
+###
+
+# DELETE EMPRESA SEM VENDAS (criar e deletar)
+# 1) Cria empresa nova:
+POST {{baseUrl}}/empresas
+Content-Type: application/json
+
+{
+  "razaoSocial": "Empresa Descartável LTDA"
+}
+
+###
+
+# 2) (Pegue o id retornado acima e troque abaixo) — deve retornar 204
+DELETE {{baseUrl}}/empresas/2
+
+###
+
+# DELETE EMPRESA INEXISTENTE (404)
+DELETE {{baseUrl}}/empresas/999999
+
+###
+
+# DELETE COM ID INVALIDO (400)
+DELETE {{baseUrl}}/empresas/abc
+
+###
+
+# DELETE COM ID NEGATIVO
+DELETE {{baseUrl}}/empresas/-1
+
+###
+
+
+# =========================
+# SUB-RECURSO: USUÁRIOS
+# =========================
+
+# LISTAR USUARIOS DA EMPRESA OK
+GET {{baseUrl}}/empresas/1/usuarios
+
+###
+
+# LISTAR USUARIOS FILTRANDO POR PERFIL FUNCIONARIO
+GET {{baseUrl}}/empresas/1/usuarios?perfil=FUNCIONARIO
+
+###
+
+# LISTAR USUARIOS FILTRANDO POR PERFIL CLIENTE
+GET {{baseUrl}}/empresas/1/usuarios?perfil=CLIENTE
+
+###
+
+# LISTAR USUARIOS FILTRANDO POR PERFIL FORNECEDOR
+GET {{baseUrl}}/empresas/1/usuarios?perfil=FORNECEDOR
+
+###
+
+###
+
+# LISTAR USUARIOS DE EMPRESA INEXISTENTE (404)
+GET {{baseUrl}}/empresas/999999/usuarios
+
+###
+
+# =========================
+# CRIAR USUÁRIO (CASO VÁLIDO MÍNIMO)
+# =========================
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "nome": "João Silva",
+  "nomeSocial": "João",
+  "perfis": ["CLIENTE"],
+  "endereco": {
+    "estado": "SP",
+    "cidade": "São José dos Campos",
+    "bairro": "Centro",
+    "rua": "Rua A",
+    "numero": "100",
+    "codigoPostal": "12209000",
+    "informacoesAdicionais": "Apto 12"
+  }
+}
+
+###
+
+# ASSOCIAR USUARIO À EMPRESA (204) — substitua o id do usuario novo
+POST {{baseUrl}}/empresas/1/usuarios/4
+
+###
+
+# ASSOCIAR USUARIO JA ASSOCIADO (409)
+POST {{baseUrl}}/empresas/1/usuarios/1
+
+###
+
+# ASSOCIAR USUARIO INEXISTENTE (404)
+POST {{baseUrl}}/empresas/1/usuarios/999999
+
+###
+
+# ASSOCIAR USUARIO EM EMPRESA INEXISTENTE (404)
+POST {{baseUrl}}/empresas/999999/usuarios/1
+
+###
+
+# DESASSOCIAR USUARIO (204)
+DELETE {{baseUrl}}/empresas/1/usuarios/4
+
+###
+
+# DESASSOCIAR USUARIO NAO ASSOCIADO (404)
+DELETE {{baseUrl}}/empresas/1/usuarios/4
+
+###
+
+# DESASSOCIAR USUARIO INEXISTENTE (404)
+DELETE {{baseUrl}}/empresas/1/usuarios/999999
+
+###
+
+
+# =========================
+# SUB-RECURSO: MERCADORIAS
+# =========================
+
+# LISTAR MERCADORIAS DA EMPRESA OK
+GET {{baseUrl}}/empresas/1/mercadorias
+
+###
+
+# LISTAR MERCADORIAS DE EMPRESA INEXISTENTE (404)
+GET {{baseUrl}}/empresas/999999/mercadorias
+
+###
+
+# CRIAR MERCADORIA NA EMPRESA (201)
+POST {{baseUrl}}/empresas/1/mercadorias
+Content-Type: application/json
+
+{
+  "nome": "Filtro de óleo Bosch",
+  "descricao": "Filtro original Bosch",
+  "valor": 79.90,
+  "validade": "2027-12-31",
+  "fabricacao": "2025-01-15",
+  "quantidade": 50
+}
+
+###
+
+# CRIAR MERCADORIA SEM NOME (400)
+POST {{baseUrl}}/empresas/1/mercadorias
+Content-Type: application/json
+
+{
+  "valor": 10.0,
+  "validade": "2027-12-31",
+  "fabricacao": "2025-01-15",
+  "quantidade": 5
+}
+
+###
+
+# CRIAR MERCADORIA COM VALOR NEGATIVO (400)
+POST {{baseUrl}}/empresas/1/mercadorias
+Content-Type: application/json
+
+{
+  "nome": "Errada",
+  "valor": -10.0,
+  "validade": "2027-12-31",
+  "fabricacao": "2025-01-15",
+  "quantidade": 1
+}
+
+###
+
+# CRIAR MERCADORIA COM QUANTIDADE NEGATIVA (400)
+POST {{baseUrl}}/empresas/1/mercadorias
+Content-Type: application/json
+
+{
+  "nome": "Errada",
+  "valor": 10.0,
+  "validade": "2027-12-31",
+  "fabricacao": "2025-01-15",
+  "quantidade": -1
+}
+
+###
+
+# CRIAR MERCADORIA COM VALIDADE PASSADA (400)
+POST {{baseUrl}}/empresas/1/mercadorias
+Content-Type: application/json
+
+{
+  "nome": "Vencida",
+  "valor": 10.0,
+  "validade": "2020-01-01",
+  "fabricacao": "2019-01-01",
+  "quantidade": 1
+}
+
+###
+
+# CRIAR MERCADORIA COM FABRICACAO FUTURA (400)
+POST {{baseUrl}}/empresas/1/mercadorias
+Content-Type: application/json
+
+{
+  "nome": "Futura",
+  "valor": 10.0,
+  "validade": "2030-01-01",
+  "fabricacao": "2099-01-01",
+  "quantidade": 1
+}
+
+###
+
+# CRIAR MERCADORIA EM EMPRESA INEXISTENTE (404)
+POST {{baseUrl}}/empresas/999999/mercadorias
+Content-Type: application/json
+
+{
+  "nome": "Item",
+  "valor": 10.0,
+  "validade": "2027-12-31",
+  "fabricacao": "2025-01-15",
+  "quantidade": 5
+}
+
+###
+
+# ASSOCIAR MERCADORIA EXISTENTE A EMPRESA (200)
+POST {{baseUrl}}/empresas/1/mercadorias/1
+
+###
+
+# ASSOCIAR MERCADORIA INEXISTENTE (404)
+POST {{baseUrl}}/empresas/1/mercadorias/999999
+
+###
+
+# ASSOCIAR MERCADORIA EM EMPRESA INEXISTENTE (404)
+POST {{baseUrl}}/empresas/999999/mercadorias/1
+
+###
+
+# DESASSOCIAR MERCADORIA EM USO POR VENDA (409 — mercadoria 1 está na venda 1)
+DELETE {{baseUrl}}/empresas/1/mercadorias/1
+
+###
+
+# DESASSOCIAR MERCADORIA QUE NAO EXISTE (404)
+DELETE {{baseUrl}}/empresas/1/mercadorias/999999
+
+###
+
+# DESASSOCIAR MERCADORIA QUE NAO PERTENCE A EMPRESA (404)
+# (Criar uma mercadoria órfã primeiro com POST, depois tentar desassociar de outra empresa)
+DELETE {{baseUrl}}/empresas/2/mercadorias/1
+
+###
+
+
+# =========================
+# SUB-RECURSO: SERVIÇOS
+# =========================
+
+# LISTAR SERVICOS DA EMPRESA OK
+GET {{baseUrl}}/empresas/1/servicos
+
+###
+
+# LISTAR SERVICOS DE EMPRESA INEXISTENTE (404)
+GET {{baseUrl}}/empresas/999999/servicos
+
+###
+
+# CRIAR SERVICO NA EMPRESA (201)
+POST {{baseUrl}}/empresas/1/servicos
+Content-Type: application/json
+
+{
+  "nome": "Troca de óleo",
+  "descricao": "Troca completa de óleo e filtro",
+  "valor": 120.00
+}
+
+###
+
+# CRIAR SERVICO SEM NOME (400)
+POST {{baseUrl}}/empresas/1/servicos
+Content-Type: application/json
+
+{
+  "valor": 50.0
+}
+
+###
+
+# CRIAR SERVICO COM VALOR ZERO (400)
+POST {{baseUrl}}/empresas/1/servicos
+Content-Type: application/json
+
+{
+  "nome": "Grátis",
+  "valor": 0
+}
+
+###
+
+# CRIAR SERVICO COM VALOR NEGATIVO (400)
+POST {{baseUrl}}/empresas/1/servicos
+Content-Type: application/json
+
+{
+  "nome": "Errado",
+  "valor": -10
+}
+
+###
+
+# CRIAR SERVICO EM EMPRESA INEXISTENTE (404)
+POST {{baseUrl}}/empresas/999999/servicos
+Content-Type: application/json
+
+{
+  "nome": "Limpeza",
+  "valor": 80.0
+}
+
+###
+
+# CRIAR SERVICO COM BODY VAZIO (400)
+POST {{baseUrl}}/empresas/1/servicos
+Content-Type: application/json
+
+{}
+
+
+###
+
+# REMOVER SERVICO DA EMPRESA (204) — substitua pelo id retornado no POST
+DELETE {{baseUrl}}/empresas/1/servicos/4
+
+###
+
+# REMOVER SERVICO INEXISTENTE (404)
+DELETE {{baseUrl}}/empresas/1/servicos/999999
+
+###
+
+# REMOVER SERVICO DE OUTRA EMPRESA (404)
+DELETE {{baseUrl}}/empresas/2/servicos/1
+
+###
+
+
+# =========================
+# SUB-RECURSO: VENDAS
+# =========================
+
+# LISTAR VENDAS DA EMPRESA OK
+GET {{baseUrl}}/empresas/1/vendas
+
+###
+
+# LISTAR VENDAS DE EMPRESA INEXISTENTE (404)
+GET {{baseUrl}}/empresas/999999/vendas
+
+###
+
+# OBTER VENDA ESPECIFICA DA EMPRESA (200)
+GET {{baseUrl}}/empresas/1/vendas/1
+
+###
+
+# OBTER VENDA QUE NAO PERTENCE A EMPRESA (404)
+GET {{baseUrl}}/empresas/1/vendas/999999
+
+###
+
+# OBTER VENDA DE EMPRESA INEXISTENTE (404)
+GET {{baseUrl}}/empresas/999999/vendas/1
+
+###
+
+# CRIAR VENDA NO CONTEXTO DA EMPRESA (201)
+POST {{baseUrl}}/empresas/1/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-EMPRESA-001",
+  "clienteId": 3,
+  "funcionarioId": 1,
+  "veiculoId": 1,
+  "mercadoriasIds": [2],
+  "servicosIds": [1]
+}
+
+###
+
+# CRIAR VENDA SO COM SERVICO (201)
+POST {{baseUrl}}/empresas/1/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-EMPRESA-002",
+  "clienteId": 3,
+  "funcionarioId": 1,
+  "veiculoId": 1,
+  "servicosIds": [2]
+}
+
+###
+
+# CRIAR VENDA SEM ITENS (400 — regra de negócio)
+POST {{baseUrl}}/empresas/1/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-EMPRESA-003",
+  "clienteId": 3,
+  "funcionarioId": 1,
+  "mercadoriasIds": [],
+  "servicosIds": []
+}
+
+###
+
+# CRIAR VENDA CLIENTE = FUNCIONARIO (400 — regra de negócio)
+POST {{baseUrl}}/empresas/1/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-EMPRESA-004",
+  "clienteId": 1,
+  "funcionarioId": 1,
+  "servicosIds": [1]
+}
+
+###
+
+# CRIAR VENDA SEM IDENTIFICACAO (400)
+POST {{baseUrl}}/empresas/1/vendas
+Content-Type: application/json
+
+{
+  "clienteId": 3,
+  "funcionarioId": 1,
+  "servicosIds": [1]
+}
+
+###
+
+# CRIAR VENDA SEM CLIENTE (400)
+POST {{baseUrl}}/empresas/1/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-EMPRESA-005",
+  "funcionarioId": 1,
+  "servicosIds": [1]
+}
+
+###
+
+# CRIAR VENDA SEM FUNCIONARIO (400)
+POST {{baseUrl}}/empresas/1/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-EMPRESA-006",
+  "clienteId": 3,
+  "servicosIds": [1]
+}
+
+###
+
+# CRIAR VENDA COM CLIENTE INEXISTENTE (400)
+POST {{baseUrl}}/empresas/1/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-EMPRESA-007",
+  "clienteId": 999999,
+  "funcionarioId": 1,
+  "servicosIds": [1]
+}
+
+###
+
+# CRIAR VENDA EM EMPRESA INEXISTENTE (404)
+POST {{baseUrl}}/empresas/999999/vendas
+Content-Type: application/json
+
+{
+  "identificacao": "VENDA-EMPRESA-008",
+  "clienteId": 3,
+  "funcionarioId": 1,
+  "servicosIds": [1]
+}
+
+###
+
+# CRIAR VENDA COM BODY VAZIO (400)
+POST {{baseUrl}}/empresas/1/vendas
+Content-Type: application/json
+
+{}
+
+###
+
+# CRIAR VENDA COM CONTENT-TYPE INVALIDO (415)
+POST {{baseUrl}}/empresas/1/vendas
+Content-Type: text/plain
+
+{
+  "identificacao": "VENDA-EMPRESA-009"
+}
+
+###
+
+
+# =========================
+# CASOS DE SEGURANÇA / EDGE
+# =========================
+
+# CRIAR EMPRESA COM SQL INJECTION
+POST {{baseUrl}}/empresas
+Content-Type: application/json
+
+{
+  "razaoSocial": "'; DROP TABLE empresa; --",
+  "nomeFantasia": "Hacker LTDA"
+}
+
+###
+
+# CRIAR EMPRESA COM XSS
+POST {{baseUrl}}/empresas
+Content-Type: application/json
+
+{
+  "razaoSocial": "<script>alert('xss')</script>",
+  "nomeFantasia": "XSS LTDA"
+}

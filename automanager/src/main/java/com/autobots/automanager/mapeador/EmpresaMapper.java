@@ -1,13 +1,13 @@
 package com.autobots.automanager.mapeador;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
 import com.autobots.automanager.dto.EmpresaResumo;
 import com.autobots.automanager.dto.requisicao.EmpresaRequest;
+import com.autobots.automanager.dto.requisicao.EmpresaUpdateRequest;
 import com.autobots.automanager.dto.resposta.EmpresaResponse;
 import com.autobots.automanager.entidade.Empresa;
 
@@ -51,5 +51,25 @@ public class EmpresaMapper {
         resumo.setRazaoSocial(empresa.getRazaoSocial());
         resumo.setNomeFantasia(empresa.getNomeFantasia());
         return resumo;
+    }
+
+    // Aplica apenas os campos != null do update parcial.
+    // Telefones com null no payload mantêm o conjunto atual;
+    // lista vazia ([]) explicitamente apaga todos os telefones.
+    public void aplicarUpdate(Empresa empresa, EmpresaUpdateRequest request) {
+        if (request.getRazaoSocial() != null) {
+            empresa.setRazaoSocial(request.getRazaoSocial());
+        }
+        if (request.getNomeFantasia() != null) {
+            empresa.setNomeFantasia(request.getNomeFantasia());
+        }
+        if (request.getEndereco() != null) {
+            empresa.setEndereco(EnderecoMapper.toEntity(request.getEndereco()));
+        }
+        if (request.getTelefones() != null) {
+            empresa.getTelefones().clear();
+            empresa.getTelefones().addAll(request.getTelefones().stream()
+                    .map(TelefoneMapper::toEntity).collect(Collectors.toSet()));
+        }
     }
 }
