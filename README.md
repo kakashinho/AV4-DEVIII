@@ -70,10 +70,31 @@ O sistema cumpre integralmente os 4 níveis do modelo:
 
 ## ▶️ Como Executar e Testar
 
-1. Clone o repositório.
-2. Certifique-se de que tem o **Java 17** instalado.
-3. Execute via Maven: `./mvnw spring-boot:run` ou pela sua IDE.
+### Pré-requisitos
+- **JDK 17 ou superior** instalado (recomendado: Temurin 17 ou 21).
+- Conexão com a internet no primeiro build (o `mvnw` baixa o Maven e as dependências automaticamente — não é preciso instalar o Maven).
+
+### Passos
+
+1. Clone o repositório e entre na pasta do módulo Spring Boot:
+   ```bash
+   git clone <url-do-repo>
+   cd mais-uma-vez/automanager
+   ```
+
+2. **Apenas no Linux/macOS**, garanta que o wrapper é executável (o `git clone` pode remover a permissão):
+   ```bash
+   chmod +x ./mvnw
+   ```
+
+3. Execute a aplicação:
+   - **Linux/macOS:** `./mvnw spring-boot:run`
+   - **Windows (PowerShell/CMD):** `.\mvnw.cmd spring-boot:run`
+   - Ou abra o projeto na sua IDE e rode `AutomanagerApplication`.
+
 4. O servidor subirá em `http://localhost:8080`.
+
+> Verifique a versão do Java com `java -version`. Se for inferior à 17, o build vai falhar com mensagem clara do `maven-enforcer-plugin` indicando o JDK necessário.
 
 ### Testes das APIs
 Na raiz do projeto, existe um ficheiro com exemplos de requisições prontos para uso:

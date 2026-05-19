@@ -9,7 +9,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.5</version>
+        <version>3.3.13</version>
         <relativePath/>
     </parent>
 
@@ -21,9 +21,13 @@
     <description>Sistema de gerenciamento automotivo</description>
 
     <properties>
-        <maven.compiler.release>17</maven.compiler.release>
         <java.version>17</java.version>
-        <lombok.version>1.18.34</lombok.version>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <lombok.version>1.18.38</lombok.version>
+        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+        <maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
     </properties>
 
     <dependencies>
@@ -112,12 +116,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
 
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-
-                    <encoding>UTF-8</encoding>
+                    <release>${java.version}</release>
+                    <encoding>${project.build.sourceEncoding}</encoding>
 
                     <annotationProcessorPaths>
                         <path>
@@ -129,6 +132,33 @@
 
                 </configuration>
 
+            </plugin>
+
+            <!-- ENFORCER: falha cedo se ambiente não atende requisitos mínimos -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven-enforcer-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-environment</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[17,)</version>
+                                    <message>Este projeto requer Java 17 ou superior. Instale um JDK 17+ (recomendado: Temurin 17 ou 21).</message>
+                                </requireJavaVersion>
+                                <requireMavenVersion>
+                                    <version>[3.6.3,)</version>
+                                    <message>Este projeto requer Maven 3.6.3 ou superior. Use o mvnw incluído no projeto.</message>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
