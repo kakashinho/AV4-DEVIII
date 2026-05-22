@@ -9,9 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.autobots.automanager.dto.requisicao.ServicoRequest;
 import com.autobots.automanager.dto.resposta.ServicoResponse;
 import com.autobots.automanager.entidade.Servico;
+import com.autobots.automanager.excecao.ServicoEmUsoException;
 import com.autobots.automanager.excecao.ServicoNaoEncontradoException;
 import com.autobots.automanager.mapeador.ServicoMapper;
 import com.autobots.automanager.repositorio.RepositorioServico;
+import com.autobots.automanager.repositorio.RepositorioVenda;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +23,7 @@ public class ServicoServiceImpl implements ServicoService {
 
     private final RepositorioServico repositorio;
     private final ServicoMapper mapper;
+    private final RepositorioVenda repositorioVenda;
 
     @Override
     @Transactional(readOnly = true)
@@ -68,10 +71,11 @@ public class ServicoServiceImpl implements ServicoService {
     @Override
     @Transactional
     public void remover(Long id) {
-
-        Servico servico = obterEntidade(id);
-
-        repositorio.delete(servico);
+        obterEntidade(id);
+        if (repositorioVenda.existsByServicosServicoId(id)) {
+            throw new ServicoEmUsoException(id);
+        }
+        repositorio.deleteById(id);
     }
 
     private Servico obterEntidade(Long id) {

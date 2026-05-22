@@ -1,44 +1,47 @@
 package com.autobots.automanager.servico;
 
+import com.autobots.automanager.dto.requisicao.VeiculoRequest;
 import com.autobots.automanager.entidade.Usuario;
 import com.autobots.automanager.entidade.Veiculo;
 import com.autobots.automanager.excecao.ResourceNotFoundException;
 import com.autobots.automanager.excecao.UsuarioNaoEncontradoException;
 import com.autobots.automanager.excecao.VeiculoBloqueadoException;
+import com.autobots.automanager.mapeador.VeiculoMapper;
 import com.autobots.automanager.repositorio.RepositorioUsuario;
 import com.autobots.automanager.repositorio.RepositorioVeiculo;
+import com.autobots.automanager.repositorio.RepositorioVenda;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class VeiculoServiceImpl implements VeiculoService {
 
-    @Autowired
-    private RepositorioVeiculo repositorioVeiculo;
-
-    @Autowired
-    private RepositorioUsuario repositorioUsuario;
+    @Autowired private RepositorioVeiculo repositorioVeiculo;
+    @Autowired private RepositorioUsuario repositorioUsuario;
+    @Autowired private RepositorioVenda repositorioVenda;
+    @Autowired private VeiculoMapper veiculoMapper;
 
     @Override
-    public Veiculo criarVeiculo(Veiculo veiculo) {
-        return repositorioVeiculo.save(veiculo);
+    public Veiculo criarVeiculo(VeiculoRequest request) {
+        Usuario proprietario = repositorioUsuario.findById(request.getProprietarioId())
+                .orElseThrow(() -> new UsuarioNaoEncontradoException(request.getProprietarioId()));
+        return repositorioVeiculo.save(veiculoMapper.toEntity(request, proprietario));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Veiculo> listarVeiculos() {
-        return repositorioVeiculo.findAll();
+        return repositorioVeiculo.findAllComProprietario();
     }
 
     @Override
     @Transactional(readOnly = true)
     public Veiculo obterVeiculo(Long id) {
-        return repositorioVeiculo.findById(id)
+        return repositorioVeiculo.findByIdComProprietario(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Veículo não encontrado com id: " + id));
     }
 
@@ -59,16 +62,13 @@ public class VeiculoServiceImpl implements VeiculoService {
     public void excluirVeiculo(Long id) {
         Veiculo veiculo = obterVeiculo(id);
         boolean temProprietario = veiculo.getProprietario() != null;
-        boolean temVendas = veiculo.getVendas() != null && !veiculo.getVendas().isEmpty();
+        boolean temVendas = repositorioVenda.existsByVeiculoId(id);
         if (temProprietario || temVendas) {
             Long proprietarioId = temProprietario ? veiculo.getProprietario().getId() : null;
-            List<Long> vendasIds = temVendas
-                    ? veiculo.getVendas().stream().map(v -> v.getId()).collect(Collectors.toList())
-                    : List.of();
             throw new VeiculoBloqueadoException(
                     "Veículo " + id + " não pode ser excluído enquanto possuir proprietário ou vendas associadas."
                     + (proprietarioId != null ? " Proprietário: " + proprietarioId + "." : "")
-                    + (!vendasIds.isEmpty() ? " Vendas: " + vendasIds + "." : ""));
+                    + (temVendas ? " Possui vendas vinculadas." : ""));
         }
         repositorioVeiculo.delete(veiculo);
     }
@@ -84,11 +84,15 @@ public class VeiculoServiceImpl implements VeiculoService {
         if (antigo != null && antigo.getId().equals(novoProprietarioId)) {
             return veiculo;
         }
-        if (antigo != null) {
-            antigo.getVeiculos().remove(veiculo);
-        }
+
         veiculo.setProprietario(novo);
-        novo.getVeiculos().add(veiculo);
         return repositorioVeiculo.save(veiculo);
+    }
+
+    @Override
+    public void removerProprietario(Long veiculoId) {
+        Veiculo veiculo = obterVeiculo(veiculoId);
+        veiculo.setProprietario(null);
+        repositorioVeiculo.save(veiculo);
     }
 }

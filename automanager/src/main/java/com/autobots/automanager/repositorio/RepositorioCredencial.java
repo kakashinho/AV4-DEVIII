@@ -15,6 +15,9 @@ public interface RepositorioCredencial extends JpaRepository<Credencial, Long> {
     @Query("select case when count(c) > 0 then true else false end from CredencialCodigoBarra c where c.codigo = :codigo")
     boolean existsByCodigo(@Param("codigo") Long codigo);
 
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM Usuario u JOIN u.credenciais c WHERE c.id = :id")
+    boolean existeAssociadoAUsuario(@Param("id") Long id);
+
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM Usuario u JOIN u.credenciais c WHERE c.id = :credencialId AND u.id <> :usuarioId")
     boolean existeAssociadoAOutroUsuario(@Param("credencialId") Long credencialId, @Param("usuarioId") Long usuarioId);
 }

@@ -1,6 +1,5 @@
 package com.autobots.automanager.dto.requisicao;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -22,17 +21,16 @@ public class UsuarioRequest {
     @Size(min = 1, message = "Pelo menos um perfil deve ser informado")
     private Set<PerfilUsuario> perfis = new HashSet<>();
 
-    @NotNull(message = "Endereço é obrigatório")
-    @Valid
-    private EnderecoRequest endereco;
+    // ID de um Endereco já cadastrado via POST /api/enderecos
+    private Long enderecoId;
 
     public String getNome() { return nome; }
     public String getNomeSocial() { return nomeSocial; }
     public Set<PerfilUsuario> getPerfis() { return perfis; }
-    public EnderecoRequest getEndereco() { return endereco; }
+    public Long getEnderecoId() { return enderecoId; }
 
     public void setNome(String nome) { this.nome = nome; }
     public void setNomeSocial(String nomeSocial) { this.nomeSocial = nomeSocial; }
     public void setPerfis(Set<PerfilUsuario> perfis) { this.perfis = perfis; }
-    public void setEndereco(EnderecoRequest endereco) { this.endereco = endereco; }
+    public void setEnderecoId(Long enderecoId) { this.enderecoId = enderecoId; }
 }

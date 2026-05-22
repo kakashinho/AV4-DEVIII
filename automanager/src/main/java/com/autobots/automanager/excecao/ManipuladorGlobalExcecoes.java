@@ -8,10 +8,14 @@ import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -60,6 +64,15 @@ public class ManipuladorGlobalExcecoes {
             }
         }
         return construirResposta(HttpStatus.BAD_REQUEST, "JSON inválido ou mal formatado.");
+    }
+
+    // ─── 405 — Método HTTP não suportado para a rota ─────────────────────────
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ResponsePadrao<Object>> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException ex) {
+        return construirResposta(HttpStatus.METHOD_NOT_ALLOWED,
+                "Método HTTP '" + ex.getMethod() + "' não é suportado para este endpoint.");
     }
 
     // ─── 415 — Content-Type inválido ─────────────────────────────────────────
@@ -220,6 +233,21 @@ public class ManipuladorGlobalExcecoes {
         return construirResposta(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    @ExceptionHandler(CredencialAssociadaException.class)
+    public ResponseEntity<ResponsePadrao<Object>> handleCredencialAssociada(CredencialAssociadaException ex) {
+        return construirResposta(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(UsuarioComVendasException.class)
+    public ResponseEntity<ResponsePadrao<Object>> handleUsuarioComVendas(UsuarioComVendasException ex) {
+        return construirResposta(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(ServicoEmUsoException.class)
+    public ResponseEntity<ResponsePadrao<Object>> handleServicoEmUso(ServicoEmUsoException ex) {
+        return construirResposta(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
     // Fallback para violações de constraint do banco não previstas pelo service.
     // Tenta inferir o campo pelo nome da constraint; nunca expõe detalhes técnicos.
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -252,6 +280,34 @@ public class ManipuladorGlobalExcecoes {
         return construirRespostaComErros(status, ex.getMessage(), ex.getErros());
     }
 
+    // ─── 409 — conflito de escrita concorrente (otimistic locking) ──────────
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ResponsePadrao<Object>> handleOptimisticLock(OptimisticLockingFailureException ex) {
+        log.warn("Conflito de concorrência: {}", ex.getMessage());
+        return construirResposta(HttpStatus.CONFLICT,
+                "O registro foi modificado por outra operação simultânea. Tente novamente.");
+    }
+
+    // ─── 422 — operação não suportada por regra de negócio ───────────────────
+
+    @ExceptionHandler(UnsupportedOperationException.class)
+    public ResponseEntity<ResponsePadrao<Object>> handleUnsupported(UnsupportedOperationException ex) {
+        return construirResposta(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+    }
+
+    // ─── 401 — credenciais inválidas no login ────────────────────────────────
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ResponsePadrao<Object>> handleBadCredentials(BadCredentialsException ex) {
+        return construirResposta(HttpStatus.UNAUTHORIZED, "Usuário ou senha inválidos.");
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ResponsePadrao<Object>> handleAuthentication(AuthenticationException ex) {
+        return construirResposta(HttpStatus.UNAUTHORIZED, "Falha na autenticação.");
+    }
+
     // ─── 500 — erro interno: log completo, resposta limpa ────────────────────
 
     @ExceptionHandler(Exception.class)
@@ -273,7 +329,7 @@ public class ManipuladorGlobalExcecoes {
         if (causaLowercase.contains("uk_credencial_codigo") || causaLowercase.contains("codigo_barra"))
             return "Código de credencial já cadastrado no sistema.";
         if (causaLowercase.contains("usuario_telefone") || causaLowercase.contains("usuario_telefones"))
-            return "Não é possível remover o telefone pois ele está associado a um usuário.";
+            return "Não é possível remover o telefone pois ele está associado a um usuário ou empresa.";
         if (causaLowercase.contains("usuario_email") || causaLowercase.contains("usuario_emails"))
             return "Não é possível remover o email pois ele está associado a um usuário.";
         if (causaLowercase.contains("uk_documento_tipo_numero") || causaLowercase.contains("usuario_documento") || causaLowercase.contains("usuario_documentos"))

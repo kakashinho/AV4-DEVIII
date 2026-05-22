@@ -3,16 +3,20 @@ package com.autobots.automanager.servico;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.autobots.automanager.dto.requisicao.*;
+import com.autobots.automanager.dto.requisicao.MercadoriaRequest;
+import com.autobots.automanager.dto.requisicao.MercadoriaUpdateRequest;
 import com.autobots.automanager.dto.resposta.MercadoriaResponse;
-import com.autobots.automanager.entidade.*;
-import com.autobots.automanager.excecao.*;
+import com.autobots.automanager.entidade.Mercadoria;
+import com.autobots.automanager.excecao.EstoqueNegativoException;
+import com.autobots.automanager.excecao.MercadoriaEmUsoException;
+import com.autobots.automanager.excecao.ResourceNotFoundException;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.autobots.automanager.mapeador.MercadoriaMapper;
 import com.autobots.automanager.repositorio.RepositorioMercadoria;
+import com.autobots.automanager.repositorio.RepositorioVenda;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +26,7 @@ public class MercadoriaServiceImpl implements MercadoriaService {
 
     private final RepositorioMercadoria repositorio;
     private final MercadoriaMapper mapper;
+    private final RepositorioVenda repositorioVenda;
 
     @Override
     @Transactional
@@ -51,7 +56,7 @@ public class MercadoriaServiceImpl implements MercadoriaService {
 
     @Override
     @Transactional
-    public MercadoriaResponse atualizar(Long id, MercadoriaRequest request) {
+    public MercadoriaResponse atualizar(Long id, MercadoriaUpdateRequest request) {
         Mercadoria mercadoria = repositorio.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Mercadoria não encontrada"));
 
@@ -63,9 +68,12 @@ public class MercadoriaServiceImpl implements MercadoriaService {
     @Override
     @Transactional
     public void remover(Long id) {
-        Mercadoria mercadoria = repositorio.findById(id)
+        repositorio.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Mercadoria não encontrada"));
-        repositorio.delete(mercadoria);
+        if (repositorioVenda.existsByItensMercadoriaId(id)) {
+            throw new MercadoriaEmUsoException(id);
+        }
+        repositorio.deleteById(id);
     }
 
     @Override
@@ -104,6 +112,15 @@ public class MercadoriaServiceImpl implements MercadoriaService {
         }
         mercadoria.setQuantidade(novoEstoque);
         mercadoria.setDisponivel(novoEstoque > 0);
+        repositorio.save(mercadoria);
+    }
+
+    @Override
+    @Transactional
+    public void desassociarEmpresa(Long mercadoriaId) {
+        Mercadoria mercadoria = repositorio.findById(mercadoriaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Mercadoria não encontrada"));
+        mercadoria.setEmpresa(null);
         repositorio.save(mercadoria);
     }
 }

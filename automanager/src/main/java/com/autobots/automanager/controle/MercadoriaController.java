@@ -10,6 +10,7 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -18,11 +19,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.autobots.automanager.dto.requisicao.EstoqueRequest;
 import com.autobots.automanager.dto.requisicao.MercadoriaRequest;
+import com.autobots.automanager.dto.requisicao.MercadoriaUpdateRequest;
 import com.autobots.automanager.dto.resposta.MercadoriaResponse;
-import com.autobots.automanager.entidade.Mercadoria;
+import com.autobots.automanager.enumeracao.TipoMovimentoEstoque;
 import com.autobots.automanager.hateaos.MercadoriaAssembler;
-import com.autobots.automanager.mapeador.MercadoriaMapper;
 import com.autobots.automanager.servico.MercadoriaService;
 
 import jakarta.validation.Valid;
@@ -31,47 +33,46 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/mercadorias")
 public class MercadoriaController {
 
-    @Autowired
-    private MercadoriaService service;
-
-    @Autowired
-    private MercadoriaMapper mapper;
-
-    @Autowired
-    private MercadoriaAssembler assembler;
+    @Autowired private MercadoriaService service;
+    @Autowired private MercadoriaAssembler assembler;
 
     @GetMapping
     public ResponseEntity<CollectionModel<EntityModel<MercadoriaResponse>>> listar() {
         List<EntityModel<MercadoriaResponse>> models = service.listarTodas().stream()
                 .map(assembler::toModel)
                 .collect(Collectors.toList());
-        CollectionModel<EntityModel<MercadoriaResponse>> collection = CollectionModel.of(models);
-        return ResponseEntity.ok(collection);
+        return ResponseEntity.ok(CollectionModel.of(models));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<EntityModel<MercadoriaResponse>> buscar(@PathVariable Long id) {
-        MercadoriaResponse mercadoria = service.buscarPorId(id);
-        EntityModel<MercadoriaResponse> model = assembler.toModel(mercadoria);
-        return ResponseEntity.ok(model);
+        return ResponseEntity.ok(assembler.toModel(service.buscarPorId(id)));
     }
 
     @PostMapping
     public ResponseEntity<EntityModel<MercadoriaResponse>> criar(
             @Valid @RequestBody MercadoriaRequest request) {
         MercadoriaResponse salva = service.cadastrar(request);
-        EntityModel<MercadoriaResponse> model = assembler.toModel(salva);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}").buildAndExpand(salva.getId()).toUri();
-        return ResponseEntity.created(location).body(model);
+        return ResponseEntity.created(location).body(assembler.toModel(salva));
     }
 
+    // PUT atualiza apenas dados descritivos (nome, valor, datas).
+    // Quantidade de estoque é gerenciada exclusivamente via PATCH /estoque.
     @PutMapping("/{id}")
     public ResponseEntity<EntityModel<MercadoriaResponse>> atualizar(
-            @PathVariable Long id, @Valid @RequestBody MercadoriaRequest request) {
-        MercadoriaResponse salva = service.atualizar(id, request);
-        EntityModel<MercadoriaResponse> model = assembler.toModel(salva);
-        return ResponseEntity.ok(model);
+            @PathVariable Long id, @Valid @RequestBody MercadoriaUpdateRequest request) {
+        return ResponseEntity.ok(assembler.toModel(service.atualizar(id, request)));
+    }
+
+    // Movimentação de estoque dedicada: ENTRADA aumenta, SAIDA diminui.
+    @PatchMapping("/{id}/estoque")
+    public ResponseEntity<EntityModel<MercadoriaResponse>> ajustarEstoque(
+            @PathVariable Long id, @Valid @RequestBody EstoqueRequest request) {
+        boolean entrada = request.getTipo() == TipoMovimentoEstoque.ENTRADA;
+        MercadoriaResponse response = service.ajustarEstoque(id, request.getQuantidade(), entrada);
+        return ResponseEntity.ok(assembler.toModel(response));
     }
 
     @DeleteMapping("/{id}")

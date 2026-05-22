@@ -4,6 +4,10 @@ import com.autobots.automanager.dto.requisicao.AssociacaoCredencialRequest;
 import com.autobots.automanager.dto.requisicao.AssociacaoDocumentoRequest;
 import com.autobots.automanager.dto.requisicao.AssociacaoEmailRequest;
 import com.autobots.automanager.dto.requisicao.AssociacaoTelefoneRequest;
+import com.autobots.automanager.dto.requisicao.CredencialUpdateRequest;
+import com.autobots.automanager.dto.requisicao.DocumentoRequest;
+import com.autobots.automanager.dto.requisicao.EmailRequest;
+import com.autobots.automanager.dto.requisicao.TelefoneRequest;
 import com.autobots.automanager.dto.requisicao.UsuarioRequest;
 import com.autobots.automanager.dto.requisicao.UsuarioUpdateRequest;
 import com.autobots.automanager.dto.resposta.CredencialResponse;
@@ -27,6 +31,10 @@ import com.autobots.automanager.mapeador.EmailMapper;
 import com.autobots.automanager.mapeador.TelefoneMapper;
 import com.autobots.automanager.mapeador.UsuarioMapper;
 import com.autobots.automanager.mapeador.VeiculoMapper;
+import com.autobots.automanager.servico.CredencialService;
+import com.autobots.automanager.servico.DocumentoService;
+import com.autobots.automanager.servico.EmailService;
+import com.autobots.automanager.servico.TelefoneService;
 import com.autobots.automanager.servico.UsuarioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -58,10 +66,12 @@ public class UsuarioController {
     private final UsuarioMapper mapper;
     private final UsuarioAssembler assembler;
 
-    @Autowired
-    private VeiculoMapper veiculoMapper;
-    @Autowired
-    private VeiculoAssembler veiculoAssembler;
+    @Autowired private VeiculoMapper veiculoMapper;
+    @Autowired private VeiculoAssembler veiculoAssembler;
+    @Autowired private TelefoneService telefoneService;
+    @Autowired private EmailService emailService;
+    @Autowired private DocumentoService documentoService;
+    @Autowired private CredencialService credencialService;
 
     // ─── CRUD de usuário ──────────────────────────────────────────────────────
 
@@ -135,6 +145,17 @@ public class UsuarioController {
         return ResponseEntity.created(location).body(model);
     }
 
+    @PutMapping("/{id}/telefones/{telefoneId}")
+    public ResponseEntity<EntityModel<TelefoneResponse>> atualizarTelefone(
+            @PathVariable Long id, @PathVariable Long telefoneId,
+            @Valid @RequestBody TelefoneRequest request) {
+        service.buscarPorId(id);
+        Telefone tel = telefoneService.atualizar(telefoneId, request);
+        EntityModel<TelefoneResponse> model = EntityModel.of(TelefoneMapper.toResponse(tel));
+        assembler.addSubResourceLinks(model, id, "telefones");
+        return ResponseEntity.ok(model);
+    }
+
     @DeleteMapping("/{id}/telefones/{telefoneId}")
     public ResponseEntity<Void> desassociarTelefone(
             @PathVariable Long id, @PathVariable Long telefoneId) {
@@ -154,6 +175,17 @@ public class UsuarioController {
         URI location = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/api/emails/{id}").buildAndExpand(email.getId()).toUri();
         return ResponseEntity.created(location).body(model);
+    }
+
+    @PutMapping("/{id}/emails/{emailId}")
+    public ResponseEntity<EntityModel<EmailResponse>> atualizarEmail(
+            @PathVariable Long id, @PathVariable Long emailId,
+            @Valid @RequestBody EmailRequest request) {
+        service.buscarPorId(id);
+        Email email = emailService.atualizar(emailId, request);
+        EntityModel<EmailResponse> model = EntityModel.of(EmailMapper.toResponse(email));
+        assembler.addSubResourceLinks(model, id, "emails");
+        return ResponseEntity.ok(model);
     }
 
     @DeleteMapping("/{id}/emails/{emailId}")
@@ -177,6 +209,17 @@ public class UsuarioController {
         return ResponseEntity.created(location).body(model);
     }
 
+    @PutMapping("/{id}/documentos/{documentoId}")
+    public ResponseEntity<EntityModel<DocumentoResponse>> atualizarDocumento(
+            @PathVariable Long id, @PathVariable Long documentoId,
+            @Valid @RequestBody DocumentoRequest request) {
+        service.buscarPorId(id);
+        Documento doc = documentoService.atualizar(documentoId, request);
+        EntityModel<DocumentoResponse> model = EntityModel.of(DocumentoMapper.toResponse(doc));
+        assembler.addSubResourceLinks(model, id, "documentos");
+        return ResponseEntity.ok(model);
+    }
+
     @DeleteMapping("/{id}/documentos/{documentoId}")
     public ResponseEntity<Void> desassociarDocumento(
             @PathVariable Long id, @PathVariable Long documentoId) {
@@ -198,6 +241,17 @@ public class UsuarioController {
         return ResponseEntity.created(location).body(model);
     }
 
+    @PutMapping("/{id}/credenciais/{credencialId}")
+    public ResponseEntity<EntityModel<CredencialResponse>> atualizarCredencial(
+            @PathVariable Long id, @PathVariable Long credencialId,
+            @Valid @RequestBody CredencialUpdateRequest request) {
+        service.buscarPorId(id);
+        Credencial cred = credencialService.atualizar(credencialId, request);
+        EntityModel<CredencialResponse> model = EntityModel.of(CredencialMapper.toResponse(cred));
+        assembler.addSubResourceLinks(model, id, "credenciais");
+        return ResponseEntity.ok(model);
+    }
+
     @DeleteMapping("/{id}/credenciais/{credencialId}")
     public ResponseEntity<Void> desassociarCredencial(
             @PathVariable Long id, @PathVariable Long credencialId) {
@@ -206,6 +260,19 @@ public class UsuarioController {
     }
 
     // ─── Associações: veículos ────────────────────────────────────────────────
+
+    @GetMapping("/{id}/veiculos")
+    @Transactional(readOnly = true)
+    public ResponseEntity<CollectionModel<EntityModel<VeiculoResponse>>> listarVeiculos(
+            @PathVariable Long id) {
+        List<EntityModel<VeiculoResponse>> models = service.listarVeiculos(id).stream()
+                .map(v -> {
+                    VeiculoResponse resp = veiculoMapper.toResponse(v);
+                    return EntityModel.of(veiculoAssembler.toModel(resp));
+                })
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(CollectionModel.of(models));
+    }
 
     // Associa um veículo já cadastrado a este usuário (define proprietário).
     // Para trocar de dono, usar PUT /api/veiculos/{id}/proprietario/{novoId}.

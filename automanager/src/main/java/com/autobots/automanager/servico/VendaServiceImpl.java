@@ -1,32 +1,37 @@
 package com.autobots.automanager.servico;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.autobots.automanager.dto.requisicao.ItemServicoRequest;
+import com.autobots.automanager.dto.requisicao.ItemVendaRequest;
 import com.autobots.automanager.dto.requisicao.VendaRequest;
-import com.autobots.automanager.entidade.Mercadoria;
-import com.autobots.automanager.entidade.Servico;
-import com.autobots.automanager.entidade.Usuario;
-import com.autobots.automanager.entidade.Veiculo;
+import com.autobots.automanager.entidade.ItemServico;
+import com.autobots.automanager.entidade.ItemVenda;
 import com.autobots.automanager.entidade.Venda;
 import com.autobots.automanager.enumeracao.PerfilUsuario;
+import com.autobots.automanager.enumeracao.StatusVenda;
 import com.autobots.automanager.excecao.ResourceNotFoundException;
 import com.autobots.automanager.excecao.VendaNaoValidaException;
 import com.autobots.automanager.modelo.ErroDeCampo;
-import com.autobots.automanager.repositorio.RepositorioMercadoria;
-import com.autobots.automanager.repositorio.RepositorioServico;
-import com.autobots.automanager.repositorio.RepositorioUsuario;
-import com.autobots.automanager.repositorio.RepositorioVeiculo;
+import com.autobots.automanager.porta.MercadoriaInfo;
+import com.autobots.automanager.porta.MercadoriaPort;
+import com.autobots.automanager.porta.ServicoInfo;
+import com.autobots.automanager.porta.ServicoPort;
+import com.autobots.automanager.porta.UsuarioInfo;
+import com.autobots.automanager.porta.UsuarioPort;
+import com.autobots.automanager.porta.VeiculoInfo;
+import com.autobots.automanager.porta.VeiculoPort;
+import com.autobots.automanager.repositorio.RepositorioEmpresa;
 import com.autobots.automanager.repositorio.RepositorioVenda;
 
 @Service
@@ -34,27 +39,31 @@ import com.autobots.automanager.repositorio.RepositorioVenda;
 public class VendaServiceImpl implements VendaService {
 
     @Autowired private RepositorioVenda repositorioVenda;
-    @Autowired private RepositorioUsuario repositorioUsuario;
-    @Autowired private RepositorioVeiculo repositorioVeiculo;
-    @Autowired private RepositorioMercadoria repositorioMercadoria;
-    @Autowired private RepositorioServico repositorioServico;
+    @Autowired private RepositorioEmpresa repositorioEmpresa;
+    @Autowired private UsuarioPort usuarioPort;
+    @Autowired private VeiculoPort veiculoPort;
+    @Autowired private MercadoriaPort mercadoriaPort;
+    @Autowired private ServicoPort servicoPort;
+    @Autowired private MercadoriaService mercadoriaService;
 
     @Override
     @Transactional(readOnly = true)
     public List<Venda> listarVendas() {
-        return repositorioVenda.findAll();
+        List<Venda> vendas = repositorioVenda.findAllComItens();
+        // Inicializa servicos dentro da transação (evita LazyInitializationException no controller)
+        vendas.forEach(v -> v.getServicos().size());
+        return vendas;
     }
 
     @Override
     @Transactional(readOnly = true)
     public Venda obterVenda(Long id) {
-        return repositorioVenda.findById(id)
+        Venda venda = repositorioVenda.findByIdComItens(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Venda não encontrada com id: " + id));
+        venda.getServicos().size();
+        return venda;
     }
 
-    // Cria venda de forma atômica: valida TUDO (acumulando erros), abate estoque
-    // e persiste. Qualquer falha aborta a transação inteira — nada é salvo,
-    // nada é abatido.
     @Override
     public Venda criarVenda(VendaRequest request) {
         List<ErroDeCampo> erros = new ArrayList<>();
@@ -67,22 +76,53 @@ public class VendaServiceImpl implements VendaService {
         Venda venda = new Venda();
         venda.setCadastro(LocalDateTime.now());
         venda.setIdentificacao(request.getIdentificacao());
-        venda.setCliente(dados.cliente);
-        venda.setFuncionario(dados.funcionario);
-        venda.setVeiculo(dados.veiculo);
-        venda.setMercadorias(new HashSet<>(dados.mercadorias));
-        venda.setServicos(new HashSet<>(dados.servicos));
+        venda.setStatus(StatusVenda.ABERTA);
+        venda.setClienteId(dados.clienteId);
+        venda.setClienteNomeSnapshot(dados.cliente != null ? dados.cliente.nome() : null);
+        venda.setFuncionarioId(dados.funcionarioId);
+        venda.setFuncionarioNomeSnapshot(dados.funcionario != null ? dados.funcionario.nome() : null);
+        venda.setVeiculoId(dados.veiculoId);
+        venda.setVeiculoPlacaSnapshot(dados.veiculo != null ? dados.veiculo.placa() : null);
+        venda.setEmpresaId(dados.empresaId);
 
-        abaterEstoque(dados.mercadorias);
-        return repositorioVenda.save(venda);
+        BigDecimal valorTotal = BigDecimal.ZERO;
+        for (ItemVendaEntry entry : dados.itensVenda) {
+            ItemVenda item = new ItemVenda();
+            item.setVenda(venda);
+            item.setMercadoriaId(entry.mercadoria().id());
+            item.setMercadoriaNomeSnapshot(entry.mercadoria().nome());
+            item.setPrecoUnitarioSnapshot(entry.mercadoria().valor());
+            item.setQuantidade(entry.quantidade());
+            BigDecimal subtotal = entry.mercadoria().valor()
+                    .multiply(BigDecimal.valueOf(entry.quantidade()));
+            item.setSubtotal(subtotal);
+            valorTotal = valorTotal.add(subtotal);
+            venda.getItens().add(item);
+        }
+        for (ServicoEntry entry : dados.itensServico) {
+            ItemServico item = new ItemServico();
+            item.setVenda(venda);
+            item.setServicoId(entry.servico().id());
+            item.setServicoNomeSnapshot(entry.servico().nome());
+            item.setPrecoSnapshot(entry.servico().valor());
+            valorTotal = valorTotal.add(entry.servico().valor());
+            venda.getServicos().add(item);
+        }
+        venda.setValorTotal(valorTotal);
+
+        Venda vendaSalva = repositorioVenda.save(venda);
+        abaterEstoque(dados.itensVenda);
+        return vendaSalva;
     }
 
-    // Atualiza venda revalidando TUDO e recalculando estoque pela diferença
-    // entre mercadorias antigas e novas. Atômico: falha em qualquer ponto
-    // reverte estoque e dados.
     @Override
     public Venda atualizarVenda(Long id, VendaRequest request) {
         Venda venda = obterVenda(id);
+
+        if (venda.getStatus() == StatusVenda.FECHADA) {
+            throw new VendaNaoValidaException("Venda fechada não pode ser alterada", List.of());
+        }
+
         List<ErroDeCampo> erros = new ArrayList<>();
         DadosVenda dados = resolverDados(request, erros);
         validarRegrasNegocio(request, dados, erros);
@@ -90,91 +130,143 @@ public class VendaServiceImpl implements VendaService {
             throw new VendaNaoValidaException("Venda inválida", erros);
         }
 
-        List<Mercadoria> mercadoriasAntigas = new ArrayList<>(venda.getMercadorias());
-        ajustarEstoqueDelta(mercadoriasAntigas, dados.mercadorias);
+        List<ItemVendaEntry> itensAntigos = venda.getItens().stream()
+                .map(i -> new ItemVendaEntry(buscarMercadoriaPorId(i.getMercadoriaId()), i.getQuantidade()))
+                .toList();
+        ajustarEstoqueDelta(itensAntigos, dados.itensVenda);
 
         venda.setIdentificacao(request.getIdentificacao());
-        venda.setCliente(dados.cliente);
-        venda.setFuncionario(dados.funcionario);
-        venda.setVeiculo(dados.veiculo);
-        venda.getMercadorias().clear();
-        venda.getMercadorias().addAll(dados.mercadorias);
+        if (request.getStatus() != null) {
+            venda.setStatus(request.getStatus());
+        }
+        venda.setClienteId(dados.clienteId);
+        venda.setClienteNomeSnapshot(dados.cliente != null ? dados.cliente.nome() : null);
+        venda.setFuncionarioId(dados.funcionarioId);
+        venda.setFuncionarioNomeSnapshot(dados.funcionario != null ? dados.funcionario.nome() : null);
+        venda.setVeiculoId(dados.veiculoId);
+        venda.setVeiculoPlacaSnapshot(dados.veiculo != null ? dados.veiculo.placa() : null);
+        venda.setEmpresaId(dados.empresaId);
+
+        venda.getItens().clear();
         venda.getServicos().clear();
-        venda.getServicos().addAll(dados.servicos);
+
+        BigDecimal valorTotal = BigDecimal.ZERO;
+        for (ItemVendaEntry entry : dados.itensVenda) {
+            ItemVenda item = new ItemVenda();
+            item.setVenda(venda);
+            item.setMercadoriaId(entry.mercadoria().id());
+            item.setMercadoriaNomeSnapshot(entry.mercadoria().nome());
+            item.setPrecoUnitarioSnapshot(entry.mercadoria().valor());
+            item.setQuantidade(entry.quantidade());
+            BigDecimal subtotal = entry.mercadoria().valor()
+                    .multiply(BigDecimal.valueOf(entry.quantidade()));
+            item.setSubtotal(subtotal);
+            valorTotal = valorTotal.add(subtotal);
+            venda.getItens().add(item);
+        }
+        for (ServicoEntry entry : dados.itensServico) {
+            ItemServico item = new ItemServico();
+            item.setVenda(venda);
+            item.setServicoId(entry.servico().id());
+            item.setServicoNomeSnapshot(entry.servico().nome());
+            item.setPrecoSnapshot(entry.servico().valor());
+            valorTotal = valorTotal.add(entry.servico().valor());
+            venda.getServicos().add(item);
+        }
+        venda.setValorTotal(valorTotal);
+
         return repositorioVenda.save(venda);
     }
 
-    // Restaura o estoque das mercadorias antes de remover a venda.
     @Override
     public void excluirVenda(Long id) {
-        Venda venda = obterVenda(id);
-        restaurarEstoque(new ArrayList<>(venda.getMercadorias()));
+        // Dentro de @Transactional — lazy load de itens funciona naturalmente
+        Venda venda = repositorioVenda.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Venda não encontrada com id: " + id));
+        List<ItemVendaEntry> itens = venda.getItens().stream()
+                .map(i -> new ItemVendaEntry(buscarMercadoriaPorId(i.getMercadoriaId()), i.getQuantidade()))
+                .toList();
+        restaurarEstoque(itens);
         repositorioVenda.delete(venda);
     }
 
-    // ─── Resolução de IDs (acumula erros em vez de lançar no primeiro) ───────
+    // ─── Resolução de dados (acumula erros) ──────────────────────────────────
 
     private DadosVenda resolverDados(VendaRequest request, List<ErroDeCampo> erros) {
         DadosVenda d = new DadosVenda();
 
         if (request.getClienteId() != null) {
-            Optional<Usuario> cli = repositorioUsuario.findById(request.getClienteId());
+            Optional<UsuarioInfo> cli = usuarioPort.buscarPorId(request.getClienteId());
             if (cli.isEmpty()) {
                 erros.add(new ErroDeCampo("clienteId",
                         "Cliente " + request.getClienteId() + " não encontrado"));
             } else {
+                d.clienteId = request.getClienteId();
                 d.cliente = cli.get();
             }
         }
 
         if (request.getFuncionarioId() != null) {
-            Optional<Usuario> fun = repositorioUsuario.findById(request.getFuncionarioId());
+            Optional<UsuarioInfo> fun = usuarioPort.buscarPorId(request.getFuncionarioId());
             if (fun.isEmpty()) {
                 erros.add(new ErroDeCampo("funcionarioId",
                         "Funcionário " + request.getFuncionarioId() + " não encontrado"));
             } else {
+                d.funcionarioId = request.getFuncionarioId();
                 d.funcionario = fun.get();
             }
         }
 
         if (request.getVeiculoId() != null) {
-            Optional<Veiculo> v = repositorioVeiculo.findById(request.getVeiculoId());
+            Optional<VeiculoInfo> v = veiculoPort.buscarPorId(request.getVeiculoId());
             if (v.isEmpty()) {
                 erros.add(new ErroDeCampo("veiculoId",
                         "Veículo " + request.getVeiculoId() + " não encontrado"));
             } else {
+                d.veiculoId = request.getVeiculoId();
                 d.veiculo = v.get();
             }
         }
 
-        if (request.getMercadoriasIds() != null) {
-            List<Long> ids = new ArrayList<>(request.getMercadoriasIds());
-            Map<Long, Mercadoria> encontradas = new HashMap<>();
-            repositorioMercadoria.findAllById(ids).forEach(m -> encontradas.put(m.getId(), m));
-            for (int i = 0; i < ids.size(); i++) {
-                Long mid = ids.get(i);
-                Mercadoria m = encontradas.get(mid);
+        if (request.getEmpresaId() != null) {
+            if (!repositorioEmpresa.existsById(request.getEmpresaId())) {
+                erros.add(new ErroDeCampo("empresaId",
+                        "Empresa " + request.getEmpresaId() + " não encontrada"));
+            } else {
+                d.empresaId = request.getEmpresaId();
+            }
+        }
+
+        if (request.getItens() != null) {
+            List<Long> ids = request.getItens().stream()
+                    .map(ItemVendaRequest::getMercadoriaId).toList();
+            Map<Long, MercadoriaInfo> encontradas = new HashMap<>();
+            mercadoriaPort.buscarPorIds(ids).forEach(m -> encontradas.put(m.id(), m));
+            for (int i = 0; i < request.getItens().size(); i++) {
+                ItemVendaRequest req = request.getItens().get(i);
+                MercadoriaInfo m = encontradas.get(req.getMercadoriaId());
                 if (m == null) {
-                    erros.add(new ErroDeCampo("mercadoriasIds[" + i + "]",
-                            "Mercadoria " + mid + " não encontrada"));
+                    erros.add(new ErroDeCampo("itens[" + i + "].mercadoriaId",
+                            "Mercadoria " + req.getMercadoriaId() + " não encontrada"));
                 } else {
-                    d.mercadorias.add(m);
+                    d.itensVenda.add(new ItemVendaEntry(m, req.getQuantidade()));
                 }
             }
         }
 
-        if (request.getServicosIds() != null) {
-            List<Long> ids = new ArrayList<>(request.getServicosIds());
-            Map<Long, Servico> encontrados = new HashMap<>();
-            repositorioServico.findAllById(ids).forEach(s -> encontrados.put(s.getId(), s));
-            for (int i = 0; i < ids.size(); i++) {
-                Long sid = ids.get(i);
-                Servico s = encontrados.get(sid);
+        if (request.getServicos() != null) {
+            List<Long> ids = request.getServicos().stream()
+                    .map(ItemServicoRequest::getServicoId).toList();
+            Map<Long, ServicoInfo> encontrados = new HashMap<>();
+            servicoPort.buscarPorIds(ids).forEach(s -> encontrados.put(s.id(), s));
+            for (int i = 0; i < request.getServicos().size(); i++) {
+                Long sid = request.getServicos().get(i).getServicoId();
+                ServicoInfo s = encontrados.get(sid);
                 if (s == null) {
-                    erros.add(new ErroDeCampo("servicosIds[" + i + "]",
+                    erros.add(new ErroDeCampo("servicos[" + i + "].servicoId",
                             "Serviço " + sid + " não encontrado"));
                 } else {
-                    d.servicos.add(s);
+                    d.itensServico.add(new ServicoEntry(s));
                 }
             }
         }
@@ -182,46 +274,41 @@ public class VendaServiceImpl implements VendaService {
         return d;
     }
 
-    // ─── Regras de negócio (acumuladas) ───────────────────────────────────────
+    // ─── Regras de negócio (acumuladas) ──────────────────────────────────────
 
     private void validarRegrasNegocio(VendaRequest request, DadosVenda d, List<ErroDeCampo> erros) {
-        if (d.cliente != null && !d.cliente.getPerfis().contains(PerfilUsuario.CLIENTE)) {
+        if (d.cliente != null && !d.cliente.perfis().contains(PerfilUsuario.ROLE_CLIENTE)) {
             erros.add(new ErroDeCampo("clienteId",
-                    "Usuário " + d.cliente.getId() + " não possui perfil CLIENTE"));
+                    "Usuário " + d.clienteId + " não possui perfil ROLE_CLIENTE"));
         }
-        if (d.funcionario != null && !d.funcionario.getPerfis().contains(PerfilUsuario.FUNCIONARIO)) {
+        if (d.funcionario != null && !d.funcionario.perfis().contains(PerfilUsuario.ROLE_VENDEDOR)) {
             erros.add(new ErroDeCampo("funcionarioId",
-                    "Usuário " + d.funcionario.getId() + " não possui perfil FUNCIONARIO"));
+                    "Usuário " + d.funcionarioId + " não possui perfil ROLE_VENDEDOR"));
         }
-        if (d.cliente != null && d.funcionario != null
-                && d.cliente.getId().equals(d.funcionario.getId())) {
+        if (d.clienteId != null && d.funcionarioId != null && d.clienteId.equals(d.funcionarioId)) {
             erros.add(new ErroDeCampo("funcionarioId",
                     "Funcionário não pode ser o mesmo usuário que o cliente"));
         }
-        if (d.veiculo != null && d.cliente != null) {
-            boolean pertenceAoCliente = d.veiculo.getProprietario() != null
-                    && d.veiculo.getProprietario().getId().equals(d.cliente.getId());
+        if (d.veiculo != null && d.clienteId != null) {
+            boolean pertenceAoCliente = d.veiculo.proprietarioId() != null
+                    && d.veiculo.proprietarioId().equals(d.clienteId);
             if (!pertenceAoCliente) {
                 erros.add(new ErroDeCampo("veiculoId",
-                        "Veículo " + d.veiculo.getId() + " não pertence ao cliente "
-                        + d.cliente.getId()));
+                        "Veículo " + d.veiculoId + " não pertence ao cliente " + d.clienteId));
             }
         }
 
-        if (request.getMercadoriasIds() != null) {
-            List<Long> ids = new ArrayList<>(request.getMercadoriasIds());
-            for (int i = 0; i < ids.size(); i++) {
-                Long mid = ids.get(i);
-                Mercadoria m = d.mercadorias.stream()
-                        .filter(x -> x.getId().equals(mid)).findFirst().orElse(null);
-                if (m != null && m.getQuantidade() <= 0) {
-                    erros.add(new ErroDeCampo("mercadoriasIds[" + i + "]",
-                            "Estoque insuficiente para a mercadoria " + mid));
-                }
+        for (int i = 0; i < d.itensVenda.size(); i++) {
+            ItemVendaEntry entry = d.itensVenda.get(i);
+            if (entry.mercadoria().quantidade() < entry.quantidade()) {
+                erros.add(new ErroDeCampo("itens[" + i + "].quantidade",
+                        "Estoque insuficiente para mercadoria " + entry.mercadoria().id()
+                        + ". Disponível: " + entry.mercadoria().quantidade()
+                        + ", solicitado: " + entry.quantidade()));
             }
         }
 
-        boolean temItens = !d.mercadorias.isEmpty() || !d.servicos.isEmpty();
+        boolean temItens = !d.itensVenda.isEmpty() || !d.itensServico.isEmpty();
         if (!temItens) {
             erros.add(new ErroDeCampo("itens",
                     "A venda deve conter pelo menos uma mercadoria ou serviço"));
@@ -230,56 +317,63 @@ public class VendaServiceImpl implements VendaService {
 
     // ─── Estoque ──────────────────────────────────────────────────────────────
 
-    // Abate 1 unidade por mercadoria vendida. Recusa se ficar negativo —
-    // defensivo, já que validarRegrasNegocio teria capturado antes.
-    private void abaterEstoque(List<Mercadoria> mercadorias) {
-        for (Mercadoria m : mercadorias) {
-            if (m.getQuantidade() <= 0) {
-                throw new VendaNaoValidaException(
-                        "Estoque insuficiente para mercadoria " + m.getId(),
-                        List.of(new ErroDeCampo("mercadoriasIds",
-                                "Estoque insuficiente para a mercadoria " + m.getId())));
+    private void abaterEstoque(List<ItemVendaEntry> itens) {
+        for (ItemVendaEntry entry : itens) {
+            mercadoriaService.consumirEstoque(entry.mercadoria().id(), entry.quantidade());
+        }
+    }
+
+    private void restaurarEstoque(List<ItemVendaEntry> itens) {
+        for (ItemVendaEntry entry : itens) {
+            mercadoriaService.ajustarEstoque(entry.mercadoria().id(), entry.quantidade(), true);
+        }
+    }
+
+    private void ajustarEstoqueDelta(List<ItemVendaEntry> antigas, List<ItemVendaEntry> novas) {
+        Map<Long, Integer> qtdAntigas = new HashMap<>();
+        antigas.forEach(e -> qtdAntigas.merge(e.mercadoria().id(), e.quantidade(), Integer::sum));
+        Map<Long, Integer> qtdNovas = new HashMap<>();
+        novas.forEach(e -> qtdNovas.merge(e.mercadoria().id(), e.quantidade(), Integer::sum));
+
+        for (ItemVendaEntry nova : novas) {
+            Long id = nova.mercadoria().id();
+            int anterior = qtdAntigas.getOrDefault(id, 0);
+            int delta = nova.quantidade() - anterior;
+            if (delta > 0) {
+                mercadoriaService.consumirEstoque(id, delta);
+            } else if (delta < 0) {
+                mercadoriaService.ajustarEstoque(id, -delta, true);
             }
-            m.setQuantidade(m.getQuantidade() - 1);
-            m.setDisponivel(m.getQuantidade() > 0);
-            repositorioMercadoria.save(m);
+        }
+        for (ItemVendaEntry antiga : antigas) {
+            if (!qtdNovas.containsKey(antiga.mercadoria().id())) {
+                mercadoriaService.ajustarEstoque(antiga.mercadoria().id(), antiga.quantidade(), true);
+            }
         }
     }
 
-    // Devolve 1 unidade ao estoque por mercadoria restaurada.
-    private void restaurarEstoque(List<Mercadoria> mercadorias) {
-        for (Mercadoria m : mercadorias) {
-            m.setQuantidade(m.getQuantidade() + 1);
-            m.setDisponivel(true);
-            repositorioMercadoria.save(m);
-        }
+    private MercadoriaInfo buscarMercadoriaPorId(Long id) {
+        return mercadoriaPort.buscarPorIds(List.of(id)).stream()
+                .filter(m -> m.id().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Mercadoria " + id + " não encontrada"));
     }
 
-    // Calcula diferença entre o conjunto antigo e o novo da venda:
-    // mercadorias removidas → devolvem ao estoque, adicionadas → abatem.
-    private void ajustarEstoqueDelta(List<Mercadoria> antigas, List<Mercadoria> novas) {
-        Set<Long> idsAntigas = new HashSet<>();
-        antigas.forEach(m -> idsAntigas.add(m.getId()));
-        Set<Long> idsNovas = new HashSet<>();
-        novas.forEach(m -> idsNovas.add(m.getId()));
-
-        List<Mercadoria> removidas = new ArrayList<>();
-        for (Mercadoria m : antigas) {
-            if (!idsNovas.contains(m.getId())) removidas.add(m);
-        }
-        List<Mercadoria> adicionadas = new ArrayList<>();
-        for (Mercadoria m : novas) {
-            if (!idsAntigas.contains(m.getId())) adicionadas.add(m);
-        }
-        restaurarEstoque(removidas);
-        abaterEstoque(adicionadas);
-    }
+    // ─── Tipos internos ───────────────────────────────────────────────────────
 
     private static class DadosVenda {
-        Usuario cliente;
-        Usuario funcionario;
-        Veiculo veiculo;
-        List<Mercadoria> mercadorias = new ArrayList<>();
-        List<Servico> servicos = new ArrayList<>();
+        Long clienteId;
+        UsuarioInfo cliente;
+        Long funcionarioId;
+        UsuarioInfo funcionario;
+        Long veiculoId;
+        VeiculoInfo veiculo;
+        Long empresaId;
+        List<ItemVendaEntry> itensVenda = new ArrayList<>();
+        List<ServicoEntry> itensServico = new ArrayList<>();
     }
+
+    private record ItemVendaEntry(MercadoriaInfo mercadoria, int quantidade) {}
+
+    private record ServicoEntry(ServicoInfo servico) {}
 }

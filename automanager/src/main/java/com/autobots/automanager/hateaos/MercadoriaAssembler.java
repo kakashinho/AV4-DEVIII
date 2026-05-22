@@ -25,6 +25,15 @@ public class MercadoriaAssembler
         model.add(linkTo(methodOn(MercadoriaController.class)
                 .listar()).withRel("todas"));
 
+        model.add(linkTo(methodOn(MercadoriaController.class)
+                .atualizar(mercadoria.getId(), null)).withRel("atualizar"));
+
+        model.add(linkTo(methodOn(MercadoriaController.class)
+                .remover(mercadoria.getId())).withRel("remover"));
+
+        model.add(linkTo(methodOn(MercadoriaController.class)
+                .ajustarEstoque(mercadoria.getId(), null)).withRel("ajustar-estoque"));
+
         return model;
     }
 

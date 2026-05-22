@@ -33,4 +33,15 @@ public class EnderecoMapper {
         e.setInformacoesAdicionais(request.getInformacoesAdicionais());
         return e;
     }
+
+    public static void aplicarUpdate(Endereco endereco, EnderecoRequest request) {
+        if (request.getEstado() != null)               endereco.setEstado(request.getEstado());
+        if (request.getCidade() != null)               endereco.setCidade(request.getCidade());
+        if (request.getBairro() != null)               endereco.setBairro(request.getBairro());
+        if (request.getRua() != null)                  endereco.setRua(request.getRua());
+        if (request.getNumero() != null)               endereco.setNumero(request.getNumero());
+        if (request.getCodigoPostal() != null)         endereco.setCodigoPostal(request.getCodigoPostal());
+        if (request.getInformacoesAdicionais() != null)
+            endereco.setInformacoesAdicionais(request.getInformacoesAdicionais());
+    }
 }

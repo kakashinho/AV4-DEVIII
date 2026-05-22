@@ -1,6 +1,8 @@
 package com.autobots.automanager.mapeador;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
@@ -10,9 +12,22 @@ import com.autobots.automanager.dto.requisicao.EmpresaRequest;
 import com.autobots.automanager.dto.requisicao.EmpresaUpdateRequest;
 import com.autobots.automanager.dto.resposta.EmpresaResponse;
 import com.autobots.automanager.entidade.Empresa;
+import com.autobots.automanager.entidade.Endereco;
+import com.autobots.automanager.entidade.Telefone;
+import com.autobots.automanager.excecao.ResourceNotFoundException;
+import com.autobots.automanager.repositorio.RepositorioEndereco;
+import com.autobots.automanager.repositorio.RepositorioTelefone;
 
 @Component
 public class EmpresaMapper {
+
+    private final RepositorioEndereco enderecoRepo;
+    private final RepositorioTelefone telefoneRepo;
+
+    public EmpresaMapper(RepositorioEndereco enderecoRepo, RepositorioTelefone telefoneRepo) {
+        this.enderecoRepo = enderecoRepo;
+        this.telefoneRepo = telefoneRepo;
+    }
 
     public EmpresaResponse toResponse(Empresa empresa) {
         EmpresaResponse r = new EmpresaResponse();
@@ -36,12 +51,19 @@ public class EmpresaMapper {
         e.setNomeFantasia(request.getNomeFantasia());
         e.setCadastro(LocalDateTime.now());
 
-        if (request.getEndereco() != null)
-            e.setEndereco(EnderecoMapper.toEntity(request.getEndereco()));
+        if (request.getEnderecoId() != null) {
+            Endereco endereco = enderecoRepo.findById(request.getEnderecoId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Endereço não encontrado com id: " + request.getEnderecoId()));
+            e.setEndereco(endereco);
+        }
 
-        if (request.getTelefones() != null)
-            e.setTelefones(request.getTelefones().stream()
-                    .map(TelefoneMapper::toEntity).collect(Collectors.toSet()));
+        if (request.getTelefoneIds() != null && !request.getTelefoneIds().isEmpty()) {
+            Set<Telefone> telefones = new HashSet<>(
+                    telefoneRepo.findAllById(request.getTelefoneIds()));
+            e.setTelefones(telefones);
+        }
+
         return e;
     }
 
@@ -54,8 +76,7 @@ public class EmpresaMapper {
     }
 
     // Aplica apenas os campos != null do update parcial.
-    // Telefones com null no payload mantêm o conjunto atual;
-    // lista vazia ([]) explicitamente apaga todos os telefones.
+    // telefoneIds com null mantém o conjunto atual; lista vazia limpa todos.
     public void aplicarUpdate(Empresa empresa, EmpresaUpdateRequest request) {
         if (request.getRazaoSocial() != null) {
             empresa.setRazaoSocial(request.getRazaoSocial());
@@ -63,13 +84,18 @@ public class EmpresaMapper {
         if (request.getNomeFantasia() != null) {
             empresa.setNomeFantasia(request.getNomeFantasia());
         }
-        if (request.getEndereco() != null) {
-            empresa.setEndereco(EnderecoMapper.toEntity(request.getEndereco()));
+        if (request.getEnderecoId() != null) {
+            Endereco endereco = enderecoRepo.findById(request.getEnderecoId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Endereço não encontrado com id: " + request.getEnderecoId()));
+            empresa.setEndereco(endereco);
         }
-        if (request.getTelefones() != null) {
+        if (request.getTelefoneIds() != null) {
             empresa.getTelefones().clear();
-            empresa.getTelefones().addAll(request.getTelefones().stream()
-                    .map(TelefoneMapper::toEntity).collect(Collectors.toSet()));
+            if (!request.getTelefoneIds().isEmpty()) {
+                empresa.getTelefones().addAll(
+                        telefoneRepo.findAllById(request.getTelefoneIds()));
+            }
         }
     }
 }

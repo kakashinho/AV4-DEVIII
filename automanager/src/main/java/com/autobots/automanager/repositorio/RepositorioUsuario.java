@@ -32,6 +32,8 @@ public interface RepositorioUsuario extends JpaRepository<Usuario, Long> {
 
     List<Usuario> findByEmpresaIdAndPerfisContaining(Long empresaId, PerfilUsuario perfil);
 
+    Optional<Usuario> findByIdAndEmpresaId(Long id, Long empresaId);
+
     long countByEmpresaId(Long empresaId);
 
     @Query("""
@@ -51,4 +53,12 @@ public interface RepositorioUsuario extends JpaRepository<Usuario, Long> {
         and c.nomeUsuario = :nomeUsuario
     """)
     boolean existsByCredencialNomeUsuario(@Param("nomeUsuario") String nomeUsuario);
+
+    @Query("""
+        select u from Usuario u
+        join fetch u.credenciais c
+        where type(c) = CredencialUsuarioSenha
+        and c.nomeUsuario = :nomeUsuario
+    """)
+    Optional<Usuario> findByCredencialNomeUsuario(@Param("nomeUsuario") String nomeUsuario);
 }

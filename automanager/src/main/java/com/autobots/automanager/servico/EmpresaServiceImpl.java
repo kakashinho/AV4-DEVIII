@@ -1,6 +1,5 @@
 package com.autobots.automanager.servico;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -18,6 +17,7 @@ import com.autobots.automanager.dto.resposta.EmpresaResponse;
 import com.autobots.automanager.dto.resposta.MercadoriaResponse;
 import com.autobots.automanager.dto.resposta.ServicoResponse;
 import com.autobots.automanager.dto.resposta.UsuarioReferencia;
+import com.autobots.automanager.dto.resposta.VendaResponse;
 import com.autobots.automanager.entidade.Empresa;
 import com.autobots.automanager.entidade.Mercadoria;
 import com.autobots.automanager.entidade.Servico;
@@ -28,7 +28,9 @@ import com.autobots.automanager.excecao.EmpresaComVendasException;
 import com.autobots.automanager.excecao.EmpresaNaoEncontradaException;
 import com.autobots.automanager.excecao.MercadoriaEmUsoException;
 import com.autobots.automanager.excecao.MercadoriaNaoEncontradaException;
+import com.autobots.automanager.excecao.RecursoJaVinculadoException;
 import com.autobots.automanager.excecao.ResourceNotFoundException;
+import com.autobots.automanager.excecao.ServicoEmUsoException;
 import com.autobots.automanager.excecao.ServicoNaoEncontradoException;
 import com.autobots.automanager.excecao.UsuarioJaAssociadoException;
 import com.autobots.automanager.excecao.UsuarioNaoAssociadoException;
@@ -36,6 +38,7 @@ import com.autobots.automanager.excecao.UsuarioNaoEncontradoException;
 import com.autobots.automanager.mapeador.EmpresaMapper;
 import com.autobots.automanager.mapeador.MercadoriaMapper;
 import com.autobots.automanager.mapeador.ServicoMapper;
+import com.autobots.automanager.mapeador.VendaMapper;
 import com.autobots.automanager.repositorio.RepositorioEmpresa;
 import com.autobots.automanager.repositorio.RepositorioMercadoria;
 import com.autobots.automanager.repositorio.RepositorioServico;
@@ -53,6 +56,9 @@ public class EmpresaServiceImpl implements EmpresaService {
     private final EmpresaMapper mapper;
     private final MercadoriaMapper mercadoriaMapper;
     private final ServicoMapper servicoMapper;
+    private final VendaMapper vendaMapper;
+    private final UsuarioService usuarioService;
+    private final MercadoriaService mercadoriaService;
     private final VendaService vendaService;
 
     public EmpresaServiceImpl(
@@ -64,6 +70,9 @@ public class EmpresaServiceImpl implements EmpresaService {
             EmpresaMapper mapper,
             MercadoriaMapper mercadoriaMapper,
             ServicoMapper servicoMapper,
+            VendaMapper vendaMapper,
+            UsuarioService usuarioService,
+            MercadoriaService mercadoriaService,
             VendaService vendaService) {
 
         this.repositorio = repositorio;
@@ -74,6 +83,9 @@ public class EmpresaServiceImpl implements EmpresaService {
         this.mapper = mapper;
         this.mercadoriaMapper = mercadoriaMapper;
         this.servicoMapper = servicoMapper;
+        this.vendaMapper = vendaMapper;
+        this.usuarioService = usuarioService;
+        this.mercadoriaService = mercadoriaService;
         this.vendaService = vendaService;
     }
 
@@ -90,16 +102,14 @@ public class EmpresaServiceImpl implements EmpresaService {
     @Override
     @Transactional(readOnly = true)
     public EmpresaResponse buscarPorId(Long id) {
-        Empresa empresa = obterEntidade(id);
-        return montarResponse(empresa);
+        return montarResponse(obterEntidade(id));
     }
 
     @Override
     @Transactional
     public EmpresaResponse cadastrar(EmpresaRequest request) {
         Empresa empresa = mapper.toEntity(request);
-        Empresa salva = repositorio.save(empresa);
-        return montarResponse(salva);
+        return montarResponse(repositorio.save(empresa));
     }
 
     @Override
@@ -107,15 +117,9 @@ public class EmpresaServiceImpl implements EmpresaService {
     public EmpresaResponse atualizar(Long id, EmpresaUpdateRequest request) {
         Empresa empresa = obterEntidade(id);
         mapper.aplicarUpdate(empresa, request);
-        Empresa salva = repositorio.save(empresa);
-        return montarResponse(salva);
+        return montarResponse(repositorio.save(empresa));
     }
 
-    // Deleta empresa com guards:
-    //  1) Vendas registradas bloqueiam o delete (histórico contábil).
-    //  2) Usuários são desvinculados (preserva a entidade Usuario).
-    //  3) Mercadorias são desvinculadas (mercadoria pode persistir num fornecedor).
-    //  4) Serviços (cascade ALL + orphanRemoval=true) caem junto com a empresa.
     @Override
     @Transactional
     public void remover(Long id) {
@@ -126,17 +130,11 @@ public class EmpresaServiceImpl implements EmpresaService {
             throw new EmpresaComVendasException(id, totalVendas);
         }
 
-        for (Usuario u : new ArrayList<>(empresa.getUsuarios())) {
-            u.setEmpresa(null);
-            usuarioRepo.save(u);
-        }
-        empresa.getUsuarios().clear();
+        usuarioRepo.findByEmpresaId(id)
+                .forEach(u -> usuarioService.desassociarEmpresa(u.getId()));
 
-        for (Mercadoria m : new ArrayList<>(empresa.getMercadorias())) {
-            m.setEmpresa(null);
-            mercadoriaRepo.save(m);
-        }
-        empresa.getMercadorias().clear();
+        mercadoriaRepo.findByEmpresaId(id)
+                .forEach(m -> mercadoriaService.desassociarEmpresa(m.getId()));
 
         repositorio.delete(empresa);
     }
@@ -169,21 +167,17 @@ public class EmpresaServiceImpl implements EmpresaService {
         }
 
         usuario.setEmpresa(empresa);
-        empresa.getUsuarios().add(usuario);
         usuarioRepo.save(usuario);
     }
 
     @Override
     @Transactional
     public void desassociarUsuario(Long empresaId, Long usuarioId) {
-        Empresa empresa = obterEntidade(empresaId);
+        obterEntidade(empresaId);
 
-        Usuario usuario = empresa.getUsuarios().stream()
-                .filter(u -> u.getId().equals(usuarioId))
-                .findFirst()
+        Usuario usuario = usuarioRepo.findByIdAndEmpresaId(usuarioId, empresaId)
                 .orElseThrow(() -> new UsuarioNaoAssociadoException(usuarioId, empresaId));
 
-        empresa.getUsuarios().remove(usuario);
         usuario.setEmpresa(null);
         usuarioRepo.save(usuario);
     }
@@ -205,8 +199,7 @@ public class EmpresaServiceImpl implements EmpresaService {
         Empresa empresa = obterEntidade(empresaId);
         Mercadoria mercadoria = mercadoriaMapper.toEntity(request);
         mercadoria.setEmpresa(empresa);
-        Mercadoria salva = mercadoriaRepo.save(mercadoria);
-        return mercadoriaMapper.toResponse(salva);
+        return mercadoriaMapper.toResponse(mercadoriaRepo.save(mercadoria));
     }
 
     @Override
@@ -216,8 +209,7 @@ public class EmpresaServiceImpl implements EmpresaService {
         Mercadoria mercadoria = mercadoriaRepo.findById(mercadoriaId)
                 .orElseThrow(() -> new MercadoriaNaoEncontradaException(mercadoriaId));
         mercadoria.setEmpresa(empresa);
-        Mercadoria salva = mercadoriaRepo.save(mercadoria);
-        return mercadoriaMapper.toResponse(salva);
+        return mercadoriaMapper.toResponse(mercadoriaRepo.save(mercadoria));
     }
 
     @Override
@@ -231,7 +223,7 @@ public class EmpresaServiceImpl implements EmpresaService {
             throw new MercadoriaNaoEncontradaException(mercadoriaId);
         }
 
-        if (vendaRepo.existsByMercadoriasId(mercadoriaId)) {
+        if (vendaRepo.existsByItensMercadoriaId(mercadoriaId)) {
             throw new MercadoriaEmUsoException(mercadoriaId);
         }
 
@@ -256,46 +248,96 @@ public class EmpresaServiceImpl implements EmpresaService {
         Empresa empresa = obterEntidade(empresaId);
         Servico servico = servicoMapper.toEntity(request);
         servico.setEmpresa(empresa);
-        empresa.getServicos().add(servico);
-        Servico salvo = servicoRepo.save(servico);
-        return servicoMapper.toResponse(salvo);
+        return servicoMapper.toResponse(servicoRepo.save(servico));
     }
 
     @Override
     @Transactional
-    public void removerServico(Long empresaId, Long servicoId) {
+    public void associarServico(Long empresaId, Long servicoId) {
+        Empresa empresa = obterEntidade(empresaId);
+        Servico servico = servicoRepo.findById(servicoId)
+                .orElseThrow(() -> new ServicoNaoEncontradoException(servicoId));
+
+        if (servico.getEmpresa() != null) {
+            throw new RecursoJaVinculadoException(
+                    "Serviço " + servicoId + " já está vinculado à empresa " + servico.getEmpresa().getId());
+        }
+
+        servico.setEmpresa(empresa);
+        servicoRepo.save(servico);
+    }
+
+    @Override
+    @Transactional
+    public void desassociarServico(Long empresaId, Long servicoId) {
         obterEntidade(empresaId);
         Servico servico = servicoRepo.findByIdAndEmpresaId(servicoId, empresaId)
                 .orElseThrow(() -> new ServicoNaoEncontradoException(servicoId));
-        servicoRepo.delete(servico);
+
+        if (vendaRepo.existsByServicosServicoId(servicoId)) {
+            throw new ServicoEmUsoException(servicoId);
+        }
+
+        servico.setEmpresa(null);
+        servicoRepo.save(servico);
     }
 
-    // ─── Vendas da empresa ────────────────────────────────────────────────────
+    // ─── Vendas da empresa — retornam DTOs (entidade JPA não cruza fronteira) ─
 
     @Override
     @Transactional(readOnly = true)
-    public List<Venda> listarVendas(Long empresaId) {
+    public List<VendaResponse> listarVendas(Long empresaId) {
         obterEntidade(empresaId);
-        return vendaRepo.findByEmpresaId(empresaId);
+        List<Venda> vendas = vendaRepo.findByEmpresaIdComItens(empresaId);
+        vendas.forEach(v -> v.getServicos().size());
+        return vendas.stream()
+                .map(vendaMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Venda obterVenda(Long empresaId, Long vendaId) {
+    public VendaResponse obterVenda(Long empresaId, Long vendaId) {
         obterEntidade(empresaId);
-        return vendaRepo.findByIdAndEmpresaId(vendaId, empresaId)
+        Venda venda = vendaRepo.findByIdAndEmpresaIdComItens(vendaId, empresaId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Venda " + vendaId + " não encontrada na empresa " + empresaId));
+        venda.getServicos().size();
+        return vendaMapper.toResponse(venda);
     }
 
     @Override
     @Transactional
-    public Venda criarVenda(Long empresaId, VendaRequest request) {
-        Empresa empresa = obterEntidade(empresaId);
+    public VendaResponse criarVenda(Long empresaId, VendaRequest request) {
+        obterEntidade(empresaId);
+        request.setEmpresaId(empresaId);
         Venda venda = vendaService.criarVenda(request);
-        venda.setEmpresa(empresa);
-        empresa.getVendas().add(venda);
-        return venda;
+        return vendaMapper.toResponse(venda);
+    }
+
+    @Override
+    @Transactional
+    public void associarVenda(Long empresaId, Long vendaId) {
+        obterEntidade(empresaId);
+        Venda venda = vendaRepo.findById(vendaId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Venda não encontrada com id: " + vendaId));
+
+        if (venda.getEmpresaId() != null) {
+            throw new RecursoJaVinculadoException(
+                    "Venda " + vendaId + " já está vinculada à empresa " + venda.getEmpresaId());
+        }
+
+        venda.setEmpresaId(empresaId);
+        vendaRepo.save(venda);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void desassociarVenda(Long empresaId, Long vendaId) {
+        throw new UnsupportedOperationException(
+                "Desassociar uma venda de uma empresa viola a integridade contábil. " +
+                "Vendas são registros imutáveis vinculados permanentemente à empresa que as realizou.");
     }
 
     // ─── Apoio / privados ─────────────────────────────────────────────────────

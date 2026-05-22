@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Component;
 
 import com.autobots.automanager.dto.requisicao.MercadoriaRequest;
+import com.autobots.automanager.dto.requisicao.MercadoriaUpdateRequest;
 import com.autobots.automanager.dto.resposta.MercadoriaResponse;
 import com.autobots.automanager.entidade.Mercadoria;
 
@@ -42,17 +43,15 @@ public class MercadoriaMapper {
         return r;
     }
 
-    public void atualizarEntidade(Mercadoria entity, MercadoriaRequest request) {
+    // Atualiza apenas dados descritivos — quantidade é imutável via PUT.
+    // Use PATCH /api/mercadorias/{id}/estoque para movimentar estoque.
+    public void atualizarEntidade(Mercadoria entity, MercadoriaUpdateRequest request) {
         if (entity == null || request == null) return;
 
-        entity.setNome(request.getNome());
-        entity.setDescricao(request.getDescricao());
-        entity.setValor(request.getValor());
-        entity.setValidade(request.getValidade());
-        entity.setFabricacao(request.getFabricacao());
-        if (request.getQuantidade() != null) {
-            entity.setQuantidade(request.getQuantidade());
-            entity.setDisponivel(request.getQuantidade() > 0);
-        }
+        if (request.getNome() != null)       entity.setNome(request.getNome());
+        if (request.getDescricao() != null)  entity.setDescricao(request.getDescricao());
+        if (request.getValor() != null)      entity.setValor(request.getValor());
+        if (request.getValidade() != null)   entity.setValidade(request.getValidade());
+        if (request.getFabricacao() != null) entity.setFabricacao(request.getFabricacao());
     }
 }

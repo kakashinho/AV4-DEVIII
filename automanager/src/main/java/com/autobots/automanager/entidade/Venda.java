@@ -1,23 +1,23 @@
 package com.autobots.automanager.entidade;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 
-import lombok.Data;
+import com.autobots.automanager.enumeracao.StatusVenda;
 
-@Data
 @Entity
 public class Venda {
 
@@ -28,51 +28,69 @@ public class Venda {
     private LocalDateTime cadastro;
     private String identificacao;
 
-    @ManyToOne
-    private Usuario cliente;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private StatusVenda status = StatusVenda.ABERTA;
 
-    @ManyToOne
-    private Usuario funcionario;
+    // Referência por ID — sem @ManyToOne, pronto para microsserviço
+    @Column(name = "cliente_id")
+    private Long clienteId;
 
-    @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.REFRESH})
-    @JoinTable(
-        name = "venda_mercadoria",
-        joinColumns = @JoinColumn(name = "venda_id"),
-        inverseJoinColumns = @JoinColumn(name = "mercadoria_id")
-    )
-    private Set<Mercadoria> mercadorias = new HashSet<>();
+    @Column(name = "cliente_nome_snapshot")
+    private String clienteNomeSnapshot;
 
-    @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.REFRESH})
-    @JoinTable(
-        name = "venda_servico",
-        joinColumns = @JoinColumn(name = "venda_id"),
-        inverseJoinColumns = @JoinColumn(name = "servico_id")
-    )
-    private Set<Servico> servicos = new HashSet<>();
+    @Column(name = "funcionario_id")
+    private Long funcionarioId;
 
-    @ManyToOne
-    private Veiculo veiculo;
+    @Column(name = "funcionario_nome_snapshot")
+    private String funcionarioNomeSnapshot;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Empresa empresa;
+    @Column(name = "veiculo_id")
+    private Long veiculoId;
+
+    @Column(name = "veiculo_placa_snapshot")
+    private String veiculoPlacaSnapshot;
+
+    @Column(name = "empresa_id", nullable = false)
+    private Long empresaId;
+
+    // LAZY: join fetch explícito nas queries que precisam dos itens
+    @OneToMany(mappedBy = "venda", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ItemVenda> itens = new ArrayList<>();
+
+    @OneToMany(mappedBy = "venda", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ItemServico> servicos = new ArrayList<>();
+
+    @Column(name = "valor_total", precision = 10, scale = 2)
+    private BigDecimal valorTotal;
 
     public Long getId() { return id; }
     public LocalDateTime getCadastro() { return cadastro; }
     public String getIdentificacao() { return identificacao; }
-    public Usuario getCliente() { return cliente; }
-    public Usuario getFuncionario() { return funcionario; }
-    public Set<Mercadoria> getMercadorias() { return mercadorias; }
-    public Set<Servico> getServicos() { return servicos; }
-    public Veiculo getVeiculo() { return veiculo; }
-    public Empresa getEmpresa() { return empresa; }
+    public StatusVenda getStatus() { return status; }
+    public Long getClienteId() { return clienteId; }
+    public String getClienteNomeSnapshot() { return clienteNomeSnapshot; }
+    public Long getFuncionarioId() { return funcionarioId; }
+    public String getFuncionarioNomeSnapshot() { return funcionarioNomeSnapshot; }
+    public Long getVeiculoId() { return veiculoId; }
+    public String getVeiculoPlacaSnapshot() { return veiculoPlacaSnapshot; }
+    public Long getEmpresaId() { return empresaId; }
+    public List<ItemVenda> getItens() { return itens; }
+    public List<ItemServico> getServicos() { return servicos; }
+    public BigDecimal getValorTotal() { return valorTotal; }
 
     public void setId(Long id) { this.id = id; }
     public void setCadastro(LocalDateTime cadastro) { this.cadastro = cadastro; }
     public void setIdentificacao(String identificacao) { this.identificacao = identificacao; }
-    public void setCliente(Usuario cliente) { this.cliente = cliente; }
-    public void setFuncionario(Usuario funcionario) { this.funcionario = funcionario; }
-    public void setMercadorias(Set<Mercadoria> mercadorias) { this.mercadorias = mercadorias; }
-    public void setServicos(Set<Servico> servicos) { this.servicos = servicos; }
-    public void setVeiculo(Veiculo veiculo) { this.veiculo = veiculo; }
-    public void setEmpresa(Empresa empresa) { this.empresa = empresa; }
+    public void setStatus(StatusVenda status) { this.status = status; }
+    public void setClienteId(Long clienteId) { this.clienteId = clienteId; }
+    public void setClienteNomeSnapshot(String clienteNomeSnapshot) { this.clienteNomeSnapshot = clienteNomeSnapshot; }
+    public void setFuncionarioId(Long funcionarioId) { this.funcionarioId = funcionarioId; }
+    public void setFuncionarioNomeSnapshot(String funcionarioNomeSnapshot) { this.funcionarioNomeSnapshot = funcionarioNomeSnapshot; }
+    public void setVeiculoId(Long veiculoId) { this.veiculoId = veiculoId; }
+    public void setVeiculoPlacaSnapshot(String veiculoPlacaSnapshot) { this.veiculoPlacaSnapshot = veiculoPlacaSnapshot; }
+    public void setEmpresaId(Long empresaId) { this.empresaId = empresaId; }
+    public void setItens(List<ItemVenda> itens) { this.itens = itens; }
+    public void setServicos(List<ItemServico> servicos) { this.servicos = servicos; }
+    public void setValorTotal(BigDecimal valorTotal) { this.valorTotal = valorTotal; }
 }

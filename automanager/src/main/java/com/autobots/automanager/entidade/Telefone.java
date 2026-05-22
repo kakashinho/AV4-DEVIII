@@ -2,11 +2,9 @@ package com.autobots.automanager.entidade;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
 
 import java.util.Objects;
 
@@ -23,9 +21,6 @@ public class Telefone {
     @Column(nullable = false)
     private String numero;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Empresa empresa;
-
     public Long getId() { return id; }
     public String getDdd() { return ddd; }
     public String getNumero() { return numero; }
@@ -35,7 +30,6 @@ public class Telefone {
     public void setNumero(String numero) { this.numero = numero; }
 
     // equals/hashCode baseado em id quando persistido, em (ddd,numero) quando transiente.
-    // Isso garante comportamento correto em Set antes e após a persistência.
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

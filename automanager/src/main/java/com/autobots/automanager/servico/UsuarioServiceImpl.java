@@ -5,6 +5,7 @@ import com.autobots.automanager.dto.requisicao.UsuarioUpdateRequest;
 import com.autobots.automanager.entidade.Credencial;
 import com.autobots.automanager.entidade.Documento;
 import com.autobots.automanager.entidade.Email;
+import com.autobots.automanager.entidade.Endereco;
 import com.autobots.automanager.entidade.Telefone;
 import com.autobots.automanager.entidade.Usuario;
 import com.autobots.automanager.entidade.Veiculo;
@@ -14,15 +15,17 @@ import com.autobots.automanager.excecao.EmailNaoEncontradoException;
 import com.autobots.automanager.excecao.RecursoJaVinculadoException;
 import com.autobots.automanager.excecao.ResourceNotFoundException;
 import com.autobots.automanager.excecao.TelefoneNaoEncontradoException;
+import com.autobots.automanager.excecao.UsuarioComVendasException;
 import com.autobots.automanager.excecao.UsuarioNaoEncontradoException;
 import com.autobots.automanager.mapeador.UsuarioMapper;
 import com.autobots.automanager.repositorio.RepositorioCredencial;
 import com.autobots.automanager.repositorio.RepositorioDocumento;
 import com.autobots.automanager.repositorio.RepositorioEmail;
+import com.autobots.automanager.repositorio.RepositorioEndereco;
 import com.autobots.automanager.repositorio.RepositorioTelefone;
 import com.autobots.automanager.repositorio.RepositorioUsuario;
 import com.autobots.automanager.repositorio.RepositorioVeiculo;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.autobots.automanager.repositorio.RepositorioVenda;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,10 +39,10 @@ public class UsuarioServiceImpl implements UsuarioService {
     private final RepositorioEmail repositorioEmail;
     private final RepositorioDocumento repositorioDocumento;
     private final RepositorioCredencial repositorioCredencial;
+    private final RepositorioEndereco repositorioEndereco;
+    private final RepositorioVeiculo repositorioVeiculo;
+    private final RepositorioVenda repositorioVenda;
     private final UsuarioMapper mapper;
-
-    @Autowired
-    private RepositorioVeiculo repositorioVeiculo;
 
     public UsuarioServiceImpl(
             RepositorioUsuario repositorio,
@@ -47,12 +50,18 @@ public class UsuarioServiceImpl implements UsuarioService {
             RepositorioEmail repositorioEmail,
             RepositorioDocumento repositorioDocumento,
             RepositorioCredencial repositorioCredencial,
+            RepositorioEndereco repositorioEndereco,
+            RepositorioVeiculo repositorioVeiculo,
+            RepositorioVenda repositorioVenda,
             UsuarioMapper mapper) {
         this.repositorio = repositorio;
         this.repositorioTelefone = repositorioTelefone;
         this.repositorioEmail = repositorioEmail;
         this.repositorioDocumento = repositorioDocumento;
         this.repositorioCredencial = repositorioCredencial;
+        this.repositorioEndereco = repositorioEndereco;
+        this.repositorioVeiculo = repositorioVeiculo;
+        this.repositorioVenda = repositorioVenda;
         this.mapper = mapper;
     }
 
@@ -78,8 +87,7 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     // Atualização parcial controlada: telefones, emails, documentos e credenciais
     // NÃO estão no UsuarioUpdateRequest — só podem ser modificados via
-    // /usuarios/{id}/<recurso>. Endereco e perfis só são alterados se enviados
-    // (null = manter). Nunca apaga dados que o cliente não enviou explicitamente.
+    // /usuarios/{id}/<recurso>. enderecoId null = manter endereço existente.
     @Override
     @Transactional
     public Usuario atualizar(Long id, UsuarioUpdateRequest request) {
@@ -94,8 +102,11 @@ public class UsuarioServiceImpl implements UsuarioService {
             usuario.setPerfis(request.getPerfis());
         }
 
-        if (request.getEndereco() != null) {
-            usuario.setEndereco(mapper.paraEntidadeEndereco(request.getEndereco()));
+        if (request.getEnderecoId() != null) {
+            Endereco endereco = repositorioEndereco.findById(request.getEnderecoId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Endereço não encontrado com id: " + request.getEnderecoId()));
+            usuario.setEndereco(endereco);
         }
 
         return repositorio.save(usuario);
@@ -104,7 +115,11 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     @Transactional
     public void remover(Long id) {
-        repositorio.delete(buscarPorId(id));
+        buscarPorId(id);
+        if (repositorioVenda.existsByClienteId(id) || repositorioVenda.existsByFuncionarioId(id)) {
+            throw new UsuarioComVendasException(id);
+        }
+        repositorio.deleteById(id);
     }
 
     // ─── Associações: telefones ───────────────────────────────────────────────
@@ -254,9 +269,15 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     // ─── Associações: veículos ────────────────────────────────────────────────
 
-    // Associa um veículo já existente ao usuário (define proprietario e adiciona
-    // à coleção). Recusa se o veículo já tem outro proprietário — para trocar
-    // de dono usar PUT /veiculos/{id}/proprietario/{novoUsuarioId}.
+    @Override
+    @Transactional(readOnly = true)
+    public List<Veiculo> listarVeiculos(Long usuarioId) {
+        buscarPorId(usuarioId);
+        return repositorioVeiculo.findByProprietarioId(usuarioId);
+    }
+
+    // Associa um veículo já existente ao usuário (define proprietario).
+    // Recusa se o veículo já tem outro proprietário.
     @Override
     @Transactional
     public Veiculo associarVeiculo(Long usuarioId, Long veiculoId) {
@@ -274,17 +295,14 @@ public class UsuarioServiceImpl implements UsuarioService {
         }
 
         veiculo.setProprietario(usuario);
-        usuario.getVeiculos().add(veiculo);
         repositorioVeiculo.save(veiculo);
         return veiculo;
     }
 
-    // Remove a associação sem deletar o veículo: limpa proprietario e remove
-    // da coleção do usuário. O veículo permanece no sistema, agora órfão.
+    // Remove a associação (proprietário) sem deletar o veículo.
     @Override
     @Transactional
     public void desassociarVeiculo(Long usuarioId, Long veiculoId) {
-        Usuario usuario = buscarPorId(usuarioId);
         Veiculo veiculo = repositorioVeiculo.findById(veiculoId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Veículo " + veiculoId + " não encontrado"));
@@ -296,7 +314,16 @@ public class UsuarioServiceImpl implements UsuarioService {
         }
 
         veiculo.setProprietario(null);
-        usuario.getVeiculos().removeIf(v -> v.getId().equals(veiculoId));
         repositorioVeiculo.save(veiculo);
+    }
+
+    // ─── Empresa ──────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public void desassociarEmpresa(Long usuarioId) {
+        Usuario usuario = buscarPorId(usuarioId);
+        usuario.setEmpresa(null);
+        repositorio.save(usuario);
     }
 }

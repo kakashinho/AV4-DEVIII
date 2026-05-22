@@ -13,4 +13,7 @@ public interface RepositorioTelefone extends JpaRepository<Telefone, Long> {
 
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM Usuario u JOIN u.telefones t WHERE t.id = :id")
     boolean existeAssociadoAUsuario(@Param("id") Long id);
+
+    @Query("SELECT CASE WHEN COUNT(e) > 0 THEN true ELSE false END FROM Empresa e JOIN e.telefones t WHERE t.id = :id")
+    boolean existeAssociadoAEmpresa(@Param("id") Long id);
 }

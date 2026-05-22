@@ -7,6 +7,9 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.stereotype.Component;
 
 import com.autobots.automanager.controle.EmpresaController;
+import com.autobots.automanager.controle.MercadoriaController;
+import com.autobots.automanager.controle.ServicoController;
+import com.autobots.automanager.controle.VendaController;
 import com.autobots.automanager.dto.EmpresaResumo;
 import com.autobots.automanager.dto.resposta.EmpresaResponse;
 
@@ -28,13 +31,13 @@ public class EmpresaAssembler {
         model.add(linkTo(EmpresaController.class).slash(id).slash("usuarios").withRel("associar-usuario"));
 
         model.add(linkTo(methodOn(EmpresaController.class).listarMercadorias(id)).withRel("mercadorias"));
-        model.add(linkTo(EmpresaController.class).slash(id).slash("mercadorias").withRel("criar-mercadoria"));
+        model.add(linkTo(methodOn(MercadoriaController.class).criar(null)).withRel("criar-mercadoria"));
 
         model.add(linkTo(methodOn(EmpresaController.class).listarServicos(id)).withRel("servicos"));
-        model.add(linkTo(EmpresaController.class).slash(id).slash("servicos").withRel("criar-servico"));
+        model.add(linkTo(methodOn(ServicoController.class).criar(null)).withRel("criar-servico"));
 
         model.add(linkTo(methodOn(EmpresaController.class).listarVendasDaEmpresa(id)).withRel("vendas"));
-        model.add(linkTo(EmpresaController.class).slash(id).slash("vendas").withRel("criar-venda"));
+        model.add(linkTo(methodOn(VendaController.class).criarVenda(null)).withRel("criar-venda"));
     }
 
     public void addCollectionLinks(CollectionModel<?> model) {
@@ -50,18 +53,18 @@ public class EmpresaAssembler {
     public void addMercadoriasLinks(CollectionModel<?> model, Long empresaId) {
         model.add(linkTo(methodOn(EmpresaController.class).listarMercadorias(empresaId)).withSelfRel());
         model.add(linkTo(methodOn(EmpresaController.class).buscar(empresaId)).withRel("empresa"));
-        model.add(linkTo(EmpresaController.class).slash(empresaId).slash("mercadorias").withRel("criar"));
+        model.add(linkTo(methodOn(MercadoriaController.class).criar(null)).withRel("criar-mercadoria"));
     }
 
     public void addServicosLinks(CollectionModel<?> model, Long empresaId) {
         model.add(linkTo(methodOn(EmpresaController.class).listarServicos(empresaId)).withSelfRel());
         model.add(linkTo(methodOn(EmpresaController.class).buscar(empresaId)).withRel("empresa"));
-        model.add(linkTo(EmpresaController.class).slash(empresaId).slash("servicos").withRel("criar"));
+        model.add(linkTo(methodOn(ServicoController.class).criar(null)).withRel("criar-servico"));
     }
 
     public void addVendasLinks(CollectionModel<?> model, Long empresaId) {
         model.add(linkTo(methodOn(EmpresaController.class).listarVendasDaEmpresa(empresaId)).withSelfRel());
         model.add(linkTo(methodOn(EmpresaController.class).buscar(empresaId)).withRel("empresa"));
-        model.add(linkTo(EmpresaController.class).slash(empresaId).slash("vendas").withRel("criar"));
+        model.add(linkTo(methodOn(VendaController.class).criarVenda(null)).withRel("criar-venda"));
     }
 }

@@ -4,20 +4,26 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToOne;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
+// @Data removido: o toString() gerado navegaria as coleções lazy causando LazyInitializationException.
+// As 4 coleções bidirecionais (usuarios/mercadorias/servicos/vendas) foram removidas:
+// cada contexto consulta o seu próprio repositório por empresaId — Empresa não precisa saber.
 @Entity
-@Data
+@Getter
+@Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Empresa {
 
@@ -35,43 +41,14 @@ public class Empresa {
     @Column(nullable = false)
     private LocalDateTime cadastro;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @ManyToMany
+    @JoinTable(
+        name = "empresa_telefone",
+        joinColumns = @JoinColumn(name = "empresa_id"),
+        inverseJoinColumns = @JoinColumn(name = "telefone_id")
+    )
     private Set<Telefone> telefones = new HashSet<>();
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne
     private Endereco endereco;
-
-    @OneToMany(mappedBy = "empresa", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private Set<Usuario> usuarios = new HashSet<>();
-
-    @OneToMany(mappedBy = "empresa")
-    private Set<Mercadoria> mercadorias = new HashSet<>();
-
-    @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Servico> servicos = new HashSet<>();
-
-    @OneToMany(mappedBy = "empresa")
-    private Set<Venda> vendas = new HashSet<>();
-
-    public Long getId() { return id; }
-    public String getRazaoSocial() { return razaoSocial; }
-    public String getNomeFantasia() { return nomeFantasia; }
-    public LocalDateTime getCadastro() { return cadastro; }
-    public Set<Telefone> getTelefones() { return telefones; }
-    public Endereco getEndereco() { return endereco; }
-    public Set<Usuario> getUsuarios() { return usuarios; }
-    public Set<Mercadoria> getMercadorias() { return mercadorias; }
-    public Set<Servico> getServicos() { return servicos; }
-    public Set<Venda> getVendas() { return vendas; }
-
-    public void setId(Long id) { this.id = id; }
-    public void setRazaoSocial(String razaoSocial) { this.razaoSocial = razaoSocial; }
-    public void setNomeFantasia(String nomeFantasia) { this.nomeFantasia = nomeFantasia; }
-    public void setCadastro(LocalDateTime cadastro) { this.cadastro = cadastro; }
-    public void setTelefones(Set<Telefone> telefones) { this.telefones = telefones; }
-    public void setEndereco(Endereco endereco) { this.endereco = endereco; }
-    public void setUsuarios(Set<Usuario> usuarios) { this.usuarios = usuarios; }
-    public void setMercadorias(Set<Mercadoria> mercadorias) { this.mercadorias = mercadorias; }
-    public void setServicos(Set<Servico> servicos) { this.servicos = servicos; }
-    public void setVendas(Set<Venda> vendas) { this.vendas = vendas; }
 }

@@ -12,7 +12,6 @@ import com.autobots.automanager.dto.resposta.ServicoResponse;
 import com.autobots.automanager.dto.resposta.UsuarioReferencia;
 import com.autobots.automanager.dto.resposta.VendaResponse;
 import com.autobots.automanager.entidade.Empresa;
-import com.autobots.automanager.entidade.Venda;
 import com.autobots.automanager.enumeracao.PerfilUsuario;
 
 import java.util.List;
@@ -41,12 +40,15 @@ public interface EmpresaService {
     // ─── Serviços da empresa ──────────────────────────────────────────────────
     List<ServicoResponse> listarServicos(Long empresaId);
     ServicoResponse criarServico(Long empresaId, ServicoRequest request);
-    void removerServico(Long empresaId, Long servicoId);
+    void associarServico(Long empresaId, Long servicoId);
+    void desassociarServico(Long empresaId, Long servicoId);
 
-    // ─── Vendas da empresa ────────────────────────────────────────────────────
-    List<Venda> listarVendas(Long empresaId);
-    Venda obterVenda(Long empresaId, Long vendaId);
-    Venda criarVenda(Long empresaId, VendaRequest request);
+    // ─── Vendas da empresa — retornam DTOs (entidade não cruza fronteira de serviço)
+    List<VendaResponse> listarVendas(Long empresaId);
+    VendaResponse obterVenda(Long empresaId, Long vendaId);
+    VendaResponse criarVenda(Long empresaId, VendaRequest request);
+    void associarVenda(Long empresaId, Long vendaId);
+    void desassociarVenda(Long empresaId, Long vendaId);
 
     // ─── Apoio (uso interno entre controllers) ────────────────────────────────
     Empresa obterEmpresa(Long id);

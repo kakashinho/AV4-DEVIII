@@ -720,13 +720,17 @@ Content-Type: application/json
   "clienteId": 3,
   "funcionarioId": 1,
   "veiculoId": 1,
-  "mercadoriasIds": [2],
-  "servicosIds": [1]
+  "itens": [
+    { "mercadoriaId": 2, "quantidade": 1 }
+  ],
+  "servicos": [
+    { "servicoId": 1 }
+  ]
 }
 
 ###
 
-# CRIAR VENDA SO COM SERVICO (201)
+# CRIAR VENDA SÓ COM SERVIÇO (201)
 POST {{baseUrl}}/empresas/1/vendas
 Content-Type: application/json
 
@@ -735,12 +739,14 @@ Content-Type: application/json
   "clienteId": 3,
   "funcionarioId": 1,
   "veiculoId": 1,
-  "servicosIds": [2]
+  "servicos": [
+    { "servicoId": 2 }
+  ]
 }
 
 ###
 
-# CRIAR VENDA SEM ITENS (400 — regra de negócio)
+# CRIAR VENDA SEM ITENS (422 — regra de negócio)
 POST {{baseUrl}}/empresas/1/vendas
 Content-Type: application/json
 
@@ -748,13 +754,13 @@ Content-Type: application/json
   "identificacao": "VENDA-EMPRESA-003",
   "clienteId": 3,
   "funcionarioId": 1,
-  "mercadoriasIds": [],
-  "servicosIds": []
+  "itens": [],
+  "servicos": []
 }
 
 ###
 
-# CRIAR VENDA CLIENTE = FUNCIONARIO (400 — regra de negócio)
+# CRIAR VENDA CLIENTE = FUNCIONÁRIO (422 — regra de negócio)
 POST {{baseUrl}}/empresas/1/vendas
 Content-Type: application/json
 
@@ -762,19 +768,23 @@ Content-Type: application/json
   "identificacao": "VENDA-EMPRESA-004",
   "clienteId": 1,
   "funcionarioId": 1,
-  "servicosIds": [1]
+  "servicos": [
+    { "servicoId": 1 }
+  ]
 }
 
 ###
 
-# CRIAR VENDA SEM IDENTIFICACAO (400)
+# CRIAR VENDA SEM IDENTIFICAÇÃO (400)
 POST {{baseUrl}}/empresas/1/vendas
 Content-Type: application/json
 
 {
   "clienteId": 3,
   "funcionarioId": 1,
-  "servicosIds": [1]
+  "servicos": [
+    { "servicoId": 1 }
+  ]
 }
 
 ###
@@ -786,24 +796,28 @@ Content-Type: application/json
 {
   "identificacao": "VENDA-EMPRESA-005",
   "funcionarioId": 1,
-  "servicosIds": [1]
+  "servicos": [
+    { "servicoId": 1 }
+  ]
 }
 
 ###
 
-# CRIAR VENDA SEM FUNCIONARIO (400)
+# CRIAR VENDA SEM FUNCIONÁRIO (400)
 POST {{baseUrl}}/empresas/1/vendas
 Content-Type: application/json
 
 {
   "identificacao": "VENDA-EMPRESA-006",
   "clienteId": 3,
-  "servicosIds": [1]
+  "servicos": [
+    { "servicoId": 1 }
+  ]
 }
 
 ###
 
-# CRIAR VENDA COM CLIENTE INEXISTENTE (400)
+# CRIAR VENDA COM CLIENTE INEXISTENTE (422)
 POST {{baseUrl}}/empresas/1/vendas
 Content-Type: application/json
 
@@ -811,7 +825,9 @@ Content-Type: application/json
   "identificacao": "VENDA-EMPRESA-007",
   "clienteId": 999999,
   "funcionarioId": 1,
-  "servicosIds": [1]
+  "servicos": [
+    { "servicoId": 1 }
+  ]
 }
 
 ###
@@ -824,7 +840,9 @@ Content-Type: application/json
   "identificacao": "VENDA-EMPRESA-008",
   "clienteId": 3,
   "funcionarioId": 1,
-  "servicosIds": [1]
+  "servicos": [
+    { "servicoId": 1 }
+  ]
 }
 
 ###

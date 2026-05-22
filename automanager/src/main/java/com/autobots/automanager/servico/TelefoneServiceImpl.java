@@ -65,7 +65,7 @@ public class TelefoneServiceImpl implements TelefoneService {
     @Transactional
     public void remover(Long id) {
         Telefone telefone = buscarPorId(id);
-        if (repositorio.existeAssociadoAUsuario(id)) {
+        if (repositorio.existeAssociadoAUsuario(id) || repositorio.existeAssociadoAEmpresa(id)) {
             throw new TelefoneAssociadoException(id);
         }
         repositorio.delete(telefone);

@@ -3,12 +3,9 @@ package com.autobots.automanager.controle;
 import com.autobots.automanager.dto.requisicao.VeiculoRequest;
 import com.autobots.automanager.dto.requisicao.VeiculoUpdateRequest;
 import com.autobots.automanager.dto.resposta.VeiculoResponse;
-import com.autobots.automanager.entidade.Usuario;
 import com.autobots.automanager.entidade.Veiculo;
-import com.autobots.automanager.excecao.UsuarioNaoEncontradoException;
 import com.autobots.automanager.hateaos.VeiculoAssembler;
 import com.autobots.automanager.mapeador.VeiculoMapper;
-import com.autobots.automanager.repositorio.RepositorioUsuario;
 import com.autobots.automanager.servico.VeiculoService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +15,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.springframework.hateoas.CollectionModel;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @RestController
 @RequestMapping("/api/veiculos")
@@ -29,27 +29,24 @@ public class VeiculoController {
     private VeiculoMapper veiculoMapper;
     @Autowired
     private VeiculoAssembler veiculoAssembler;
-    @Autowired
-    private RepositorioUsuario usuarioRepo;
 
     @PostMapping
     public ResponseEntity<VeiculoResponse> criarVeiculo(@Valid @RequestBody VeiculoRequest request) {
-        Usuario proprietario = usuarioRepo.findById(request.getProprietarioId())
-                .orElseThrow(() -> new UsuarioNaoEncontradoException(request.getProprietarioId()));
-        Veiculo veiculo = veiculoMapper.toEntity(request, proprietario);
-        Veiculo salvo = veiculoService.criarVeiculo(veiculo);
-        VeiculoResponse response = veiculoMapper.toResponse(salvo);
-        response = veiculoAssembler.toModel(response);
+        Veiculo salvo = veiculoService.criarVeiculo(request);
+        VeiculoResponse response = veiculoAssembler.toModel(veiculoMapper.toResponse(salvo));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
-    public ResponseEntity<List<VeiculoResponse>> listarVeiculos() {
+    public ResponseEntity<CollectionModel<VeiculoResponse>> listarVeiculos() {
         List<VeiculoResponse> responses = veiculoService.listarVeiculos().stream()
                 .map(veiculoMapper::toResponse)
                 .map(veiculoAssembler::toModel)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+        CollectionModel<VeiculoResponse> collection = CollectionModel.of(responses);
+        collection.add(linkTo(methodOn(VeiculoController.class).listarVeiculos()).withSelfRel());
+        collection.add(linkTo(methodOn(VeiculoController.class).criarVeiculo(null)).withRel("criar"));
+        return ResponseEntity.ok(collection);
     }
 
     @GetMapping("/{id}")
@@ -83,6 +80,12 @@ public class VeiculoController {
         VeiculoResponse response = veiculoMapper.toResponse(veiculo);
         response = veiculoAssembler.toModel(response);
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}/proprietario")
+    public ResponseEntity<Void> removerProprietario(@PathVariable Long id) {
+        veiculoService.removerProprietario(id);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")

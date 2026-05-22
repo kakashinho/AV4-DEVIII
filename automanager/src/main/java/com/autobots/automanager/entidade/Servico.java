@@ -10,11 +10,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
-@EqualsAndHashCode
-@Data
+// @Data removido: o toString() gerado tentaria inicializar o proxy lazy de 'empresa'.
+@Getter
+@Setter
+@EqualsAndHashCode(exclude = { "empresa" })
 @Entity
 public class Servico {
 

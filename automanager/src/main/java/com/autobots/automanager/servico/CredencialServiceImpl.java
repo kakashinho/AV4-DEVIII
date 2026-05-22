@@ -4,6 +4,7 @@ import com.autobots.automanager.dto.requisicao.CredencialRequest;
 import com.autobots.automanager.dto.requisicao.CredencialUpdateRequest;
 import com.autobots.automanager.entidade.Credencial;
 import com.autobots.automanager.entidade.CredencialUsuarioSenha;
+import com.autobots.automanager.excecao.CredencialAssociadaException;
 import com.autobots.automanager.excecao.CredencialDuplicadaException;
 import com.autobots.automanager.excecao.CredencialNaoEncontradaException;
 import com.autobots.automanager.excecao.ValidationException;
@@ -68,6 +69,10 @@ public class CredencialServiceImpl implements CredencialService {
     @Override
     @Transactional
     public void remover(Long id) {
-        repositorio.delete(buscarPorId(id));
+        buscarPorId(id);
+        if (repositorio.existeAssociadoAUsuario(id)) {
+            throw new CredencialAssociadaException(id);
+        }
+        repositorio.deleteById(id);
     }
 }

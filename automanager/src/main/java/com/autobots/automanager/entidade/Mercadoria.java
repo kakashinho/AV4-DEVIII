@@ -6,13 +6,19 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
-import lombok.Data;
+import jakarta.persistence.Transient;
+import jakarta.persistence.Version;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+// @Data removido: o toString() gerado tentaria inicializar o proxy lazy de 'empresa'.
+@Getter
+@Setter
 @Entity
 public class Mercadoria {
 
@@ -20,11 +26,11 @@ public class Mercadoria {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    private Empresa empresa;
+    @Version
+    private Long versao;
 
-    @ManyToOne
-    private Usuario usuario;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Empresa empresa;
 
     @Column(nullable = false)
     private LocalDate validade;
@@ -47,11 +53,11 @@ public class Mercadoria {
     @Column
     private String descricao;
 
+    @Transient
     private boolean disponivel;
 
     public Long getId() { return id; }
     public Empresa getEmpresa() { return empresa; }
-    public Usuario getUsuario() { return usuario; }
     public LocalDate getValidade() { return validade; }
     public LocalDate getFabricacao() { return fabricacao; }
     public LocalDateTime getCadastro() { return cadastro; }
@@ -59,11 +65,10 @@ public class Mercadoria {
     public BigDecimal getValor() { return valor; }
     public long getQuantidade() { return quantidade; }
     public String getDescricao() { return descricao; }
-    public boolean isDisponivel() { return disponivel; }
+    public boolean isDisponivel() { return quantidade > 0; }
 
     public void setId(Long id) { this.id = id; }
     public void setEmpresa(Empresa empresa) { this.empresa = empresa; }
-    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
     public void setValidade(LocalDate validade) { this.validade = validade; }
     public void setFabricacao(LocalDate fabricacao) { this.fabricacao = fabricacao; }
     public void setCadastro(LocalDateTime cadastro) { this.cadastro = cadastro; }
@@ -71,5 +76,5 @@ public class Mercadoria {
     public void setValor(BigDecimal valor) { this.valor = valor; }
     public void setQuantidade(long quantidade) { this.quantidade = quantidade; }
     public void setDescricao(String descricao) { this.descricao = descricao; }
-    public void setDisponivel(boolean disponivel) { this.disponivel = disponivel; }
+    public void setDisponivel(boolean disponivel) { /* derivado de quantidade — ignorado */ }
 }

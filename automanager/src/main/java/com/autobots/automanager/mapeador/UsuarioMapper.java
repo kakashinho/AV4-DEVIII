@@ -1,6 +1,5 @@
 package com.autobots.automanager.mapeador;
 
-import com.autobots.automanager.dto.requisicao.EnderecoRequest;
 import com.autobots.automanager.dto.requisicao.UsuarioRequest;
 import com.autobots.automanager.dto.resposta.CredencialResponse;
 import com.autobots.automanager.dto.resposta.DocumentoResponse;
@@ -18,6 +17,8 @@ import com.autobots.automanager.entidade.Email;
 import com.autobots.automanager.entidade.Endereco;
 import com.autobots.automanager.entidade.Telefone;
 import com.autobots.automanager.entidade.Usuario;
+import com.autobots.automanager.excecao.ResourceNotFoundException;
+import com.autobots.automanager.repositorio.RepositorioEndereco;
 import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
@@ -25,27 +26,24 @@ import java.util.stream.Collectors;
 @Component
 public class UsuarioMapper {
 
+    private final RepositorioEndereco enderecoRepo;
+
+    public UsuarioMapper(RepositorioEndereco enderecoRepo) {
+        this.enderecoRepo = enderecoRepo;
+    }
+
     public Usuario paraEntidade(UsuarioRequest request) {
         Usuario usuario = new Usuario();
         usuario.setNome(request.getNome());
         usuario.setNomeSocial(request.getNomeSocial());
         usuario.setPerfis(request.getPerfis());
-        if (request.getEndereco() != null) {
-            usuario.setEndereco(paraEntidadeEndereco(request.getEndereco()));
+        if (request.getEnderecoId() != null) {
+            Endereco endereco = enderecoRepo.findById(request.getEnderecoId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Endereço não encontrado com id: " + request.getEnderecoId()));
+            usuario.setEndereco(endereco);
         }
         return usuario;
-    }
-
-    public Endereco paraEntidadeEndereco(EnderecoRequest dto) {
-        Endereco end = new Endereco();
-        end.setEstado(dto.getEstado());
-        end.setCidade(dto.getCidade());
-        end.setBairro(dto.getBairro());
-        end.setRua(dto.getRua());
-        end.setNumero(dto.getNumero());
-        end.setCodigoPostal(dto.getCodigoPostal());
-        end.setInformacoesAdicionais(dto.getInformacoesAdicionais());
-        return end;
     }
 
     public UsuarioResponse paraResponse(Usuario usuario) {
@@ -80,7 +78,6 @@ public class UsuarioMapper {
     }
 
     public UsuarioReferencia paraReferencia(Usuario usuario) {
-        //boolean strictMapping = true;
         UsuarioReferencia ref = new UsuarioReferencia();
         ref.setId(usuario.getId());
         ref.setNome(usuario.getNome());

@@ -38,7 +38,7 @@ GET {{baseUrl}}/vendas/-1
 # CRIAÇÃO - CASOS VÁLIDOS
 # =========================
 
-# CRIAR VENDA COMPLETA
+# CRIAR VENDA COMPLETA (mercadoria + serviço)
 POST {{baseUrl}}/vendas
 Content-Type: application/json
 
@@ -46,9 +46,14 @@ Content-Type: application/json
   "identificacao": "VENDA-001",
   "clienteId": 3,
   "funcionarioId": 1,
-  "veiculoId": 2,
-  "mercadoriasIds": [1],
-  "servicosIds": [1]
+  "veiculoId": 1,
+  "empresaId": 1,
+  "itens": [
+    { "mercadoriaId": 2, "quantidade": 1 }
+  ],
+  "servicos": [
+    { "servicoId": 1 }
+  ]
 }
 
 ###
@@ -59,9 +64,12 @@ Content-Type: application/json
 
 {
   "identificacao": "VENDA-002",
-  "clienteId": 1,
-  "funcionarioId": 2,
-  "mercadoriasIds": [1]
+  "clienteId": 3,
+  "funcionarioId": 1,
+  "empresaId": 1,
+  "itens": [
+    { "mercadoriaId": 2, "quantidade": 1 }
+  ]
 }
 
 ###
@@ -72,22 +80,28 @@ Content-Type: application/json
 
 {
   "identificacao": "VENDA-003",
-  "clienteId": 1,
-  "funcionarioId": 2,
-  "servicosIds": [1]
+  "clienteId": 3,
+  "funcionarioId": 1,
+  "empresaId": 1,
+  "servicos": [
+    { "servicoId": 1 }
+  ]
 }
 
 ###
 
-# CRIAR VENDA COM VEÍCULO NULO (válido se regra permitir)
+# CRIAR VENDA SEM VEÍCULO (válido)
 POST {{baseUrl}}/vendas
 Content-Type: application/json
 
 {
   "identificacao": "VENDA-004",
-  "clienteId": 1,
-  "funcionarioId": 2,
-  "mercadoriasIds": [1]
+  "clienteId": 3,
+  "funcionarioId": 1,
+  "empresaId": 1,
+  "itens": [
+    { "mercadoriaId": 2, "quantidade": 1 }
+  ]
 }
 
 ###
@@ -102,9 +116,12 @@ Content-Type: application/json
 
 {
   "identificacao": "",
-  "clienteId": 1,
-  "funcionarioId": 2,
-  "mercadoriasIds": [1]
+  "clienteId": 3,
+  "funcionarioId": 1,
+  "empresaId": 1,
+  "itens": [
+    { "mercadoriaId": 2, "quantidade": 1 }
+  ]
 }
 
 ###
@@ -114,8 +131,9 @@ POST {{baseUrl}}/vendas
 Content-Type: application/json
 
 {
-  "clienteId": 1,
-  "funcionarioId": 2
+  "clienteId": 3,
+  "funcionarioId": 1,
+  "empresaId": 1
 }
 
 ###
@@ -126,8 +144,11 @@ Content-Type: application/json
 
 {
   "identificacao": "VENDA-005",
-  "funcionarioId": 2,
-  "mercadoriasIds": [1]
+  "funcionarioId": 1,
+  "empresaId": 1,
+  "itens": [
+    { "mercadoriaId": 2, "quantidade": 1 }
+  ]
 }
 
 ###
@@ -138,27 +159,31 @@ Content-Type: application/json
 
 {
   "identificacao": "VENDA-006",
-  "clienteId": 1,
-  "mercadoriasIds": [1]
+  "clienteId": 3,
+  "empresaId": 1,
+  "itens": [
+    { "mercadoriaId": 2, "quantidade": 1 }
+  ]
 }
 
 ###
 
-# SEM ITENS (REGRA NEGÓCIO)
+# SEM ITENS (REGRA NEGÓCIO — deve retornar 422)
 POST {{baseUrl}}/vendas
 Content-Type: application/json
 
 {
   "identificacao": "VENDA-007",
-  "clienteId": 1,
-  "funcionarioId": 2,
-  "mercadoriasIds": [],
-  "servicosIds": []
+  "clienteId": 3,
+  "funcionarioId": 1,
+  "empresaId": 1,
+  "itens": [],
+  "servicos": []
 }
 
 ###
 
-# CLIENTE = FUNCIONÁRIO (REGRA NEGÓCIO)
+# CLIENTE = FUNCIONÁRIO (REGRA NEGÓCIO — deve retornar 422)
 POST {{baseUrl}}/vendas
 Content-Type: application/json
 
@@ -166,7 +191,10 @@ Content-Type: application/json
   "identificacao": "VENDA-008",
   "clienteId": 1,
   "funcionarioId": 1,
-  "mercadoriasIds": [1]
+  "empresaId": 1,
+  "servicos": [
+    { "servicoId": 1 }
+  ]
 }
 
 ###
@@ -182,8 +210,11 @@ Content-Type: application/json
 {
   "identificacao": "VENDA-009",
   "clienteId": 999999,
-  "funcionarioId": 2,
-  "mercadoriasIds": [1]
+  "funcionarioId": 1,
+  "empresaId": 1,
+  "itens": [
+    { "mercadoriaId": 2, "quantidade": 1 }
+  ]
 }
 
 ###
@@ -194,9 +225,12 @@ Content-Type: application/json
 
 {
   "identificacao": "VENDA-010",
-  "clienteId": 1,
+  "clienteId": 3,
   "funcionarioId": 999999,
-  "mercadoriasIds": [1]
+  "empresaId": 1,
+  "itens": [
+    { "mercadoriaId": 2, "quantidade": 1 }
+  ]
 }
 
 ###
@@ -207,9 +241,12 @@ Content-Type: application/json
 
 {
   "identificacao": "VENDA-011",
-  "clienteId": 1,
-  "funcionarioId": 2,
-  "mercadoriasIds": [999999]
+  "clienteId": 3,
+  "funcionarioId": 1,
+  "empresaId": 1,
+  "itens": [
+    { "mercadoriaId": 999999, "quantidade": 1 }
+  ]
 }
 
 ###
@@ -220,9 +257,12 @@ Content-Type: application/json
 
 {
   "identificacao": "VENDA-012",
-  "clienteId": 1,
-  "funcionarioId": 2,
-  "servicosIds": [999999]
+  "clienteId": 3,
+  "funcionarioId": 1,
+  "empresaId": 1,
+  "servicos": [
+    { "servicoId": 999999 }
+  ]
 }
 
 ###
@@ -233,10 +273,13 @@ Content-Type: application/json
 
 {
   "identificacao": "VENDA-013",
-  "clienteId": 1,
-  "funcionarioId": 2,
+  "clienteId": 3,
+  "funcionarioId": 1,
   "veiculoId": 999999,
-  "mercadoriasIds": [1]
+  "empresaId": 1,
+  "itens": [
+    { "mercadoriaId": 2, "quantidade": 1 }
+  ]
 }
 
 ###
@@ -245,15 +288,17 @@ Content-Type: application/json
 # PAYLOADS MALFORMADOS
 # =========================
 
-# JSON INVÁLIDO
+# JSON INVÁLIDO (vírgula sobrando)
 POST {{baseUrl}}/vendas
 Content-Type: application/json
 
 {
   "identificacao": "VENDA-014",
-  "clienteId": 1,
-  "funcionarioId": 2,
-  "mercadoriasIds": [1],
+  "clienteId": 3,
+  "funcionarioId": 1,
+  "itens": [
+    { "mercadoriaId": 2, "quantidade": 1 }
+  ],
 }
 
 ###
@@ -288,9 +333,14 @@ Content-Type: application/json
   "identificacao": "VENDA-001-UPDATE",
   "clienteId": 3,
   "funcionarioId": 1,
-  "veiculoId": 2,
-  "mercadoriasIds": [1],
-  "servicosIds": [1]
+  "veiculoId": 1,
+  "empresaId": 1,
+  "itens": [
+    { "mercadoriaId": 2, "quantidade": 1 }
+  ],
+  "servicos": [
+    { "servicoId": 1 }
+  ]
 }
 
 ###
@@ -300,8 +350,8 @@ PUT {{baseUrl}}/vendas/1
 Content-Type: application/json
 
 {
-  "clienteId": 1,
-  "funcionarioId": 2
+  "clienteId": 3,
+  "funcionarioId": 1
 }
 
 ###

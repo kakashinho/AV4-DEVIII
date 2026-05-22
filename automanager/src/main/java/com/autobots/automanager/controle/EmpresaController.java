@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,13 +31,11 @@ import com.autobots.automanager.dto.resposta.MercadoriaResponse;
 import com.autobots.automanager.dto.resposta.ServicoResponse;
 import com.autobots.automanager.dto.resposta.UsuarioReferencia;
 import com.autobots.automanager.dto.resposta.VendaResponse;
-import com.autobots.automanager.entidade.Venda;
 import com.autobots.automanager.enumeracao.PerfilUsuario;
 import com.autobots.automanager.hateaos.EmpresaAssembler;
 import com.autobots.automanager.hateaos.MercadoriaAssembler;
 import com.autobots.automanager.hateaos.ServicoAssembler;
 import com.autobots.automanager.hateaos.VendaAssembler;
-import com.autobots.automanager.mapeador.VendaMapper;
 import com.autobots.automanager.servico.EmpresaService;
 
 import jakarta.validation.Valid;
@@ -51,7 +48,6 @@ public class EmpresaController {
     @Autowired private EmpresaAssembler empresaAssembler;
     @Autowired private MercadoriaAssembler mercadoriaAssembler;
     @Autowired private ServicoAssembler servicoAssembler;
-    @Autowired private VendaMapper vendaMapper;
     @Autowired private VendaAssembler vendaAssembler;
 
     // ─── CRUD principal ───────────────────────────────────────────────────────
@@ -196,22 +192,27 @@ public class EmpresaController {
         return ResponseEntity.created(location).body(model);
     }
 
-    @DeleteMapping("/{id}/servicos/{servicoId}")
-    public ResponseEntity<Void> removerServico(
+    @PostMapping("/{id}/servicos/{servicoId}")
+    public ResponseEntity<Void> associarServico(
             @PathVariable Long id, @PathVariable Long servicoId) {
-        empresaService.removerServico(id, servicoId);
+        empresaService.associarServico(id, servicoId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/servicos/{servicoId}")
+    public ResponseEntity<Void> desassociarServico(
+            @PathVariable Long id, @PathVariable Long servicoId) {
+        empresaService.desassociarServico(id, servicoId);
         return ResponseEntity.noContent().build();
     }
 
     // ─── Sub-recurso: vendas ──────────────────────────────────────────────────
+    // @Transactional removido: serviço retorna VendaResponse (mapeamento dentro da transação do serviço)
 
     @GetMapping("/{empresaId}/vendas")
-    @Transactional(readOnly = true)
     public ResponseEntity<CollectionModel<VendaResponse>> listarVendasDaEmpresa(
             @PathVariable Long empresaId) {
-        List<Venda> vendas = empresaService.listarVendas(empresaId);
-        List<VendaResponse> responses = vendas.stream()
-                .map(vendaMapper::toResponse)
+        List<VendaResponse> responses = empresaService.listarVendas(empresaId).stream()
                 .map(vendaAssembler::toModel)
                 .collect(Collectors.toList());
         CollectionModel<VendaResponse> collection = CollectionModel.of(responses);
@@ -220,22 +221,32 @@ public class EmpresaController {
     }
 
     @GetMapping("/{empresaId}/vendas/{vendaId}")
-    @Transactional(readOnly = true)
     public ResponseEntity<VendaResponse> obterVendaDaEmpresa(
             @PathVariable Long empresaId, @PathVariable Long vendaId) {
-        Venda venda = empresaService.obterVenda(empresaId, vendaId);
-        VendaResponse response = vendaAssembler.toModel(vendaMapper.toResponse(venda));
+        VendaResponse response = vendaAssembler.toModel(empresaService.obterVenda(empresaId, vendaId));
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{empresaId}/vendas")
     public ResponseEntity<VendaResponse> criarVendaDaEmpresa(
             @PathVariable Long empresaId, @Valid @RequestBody VendaRequest request) {
-        Venda venda = empresaService.criarVenda(empresaId, request);
-        VendaResponse response = vendaAssembler.toModel(vendaMapper.toResponse(venda));
+        VendaResponse response = empresaService.criarVenda(empresaId, request);
         URI location = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/api/empresas/{empresaId}/vendas/{vendaId}")
-                .buildAndExpand(empresaId, venda.getId()).toUri();
-        return ResponseEntity.created(location).body(response);
+                .path("/api/vendas/{id}").buildAndExpand(response.getId()).toUri();
+        return ResponseEntity.created(location).body(vendaAssembler.toModel(response));
+    }
+
+    @PostMapping("/{empresaId}/vendas/{vendaId}")
+    public ResponseEntity<Void> associarVenda(
+            @PathVariable Long empresaId, @PathVariable Long vendaId) {
+        empresaService.associarVenda(empresaId, vendaId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{empresaId}/vendas/{vendaId}")
+    public ResponseEntity<Void> desassociarVenda(
+            @PathVariable Long empresaId, @PathVariable Long vendaId) {
+        empresaService.desassociarVenda(empresaId, vendaId);
+        return ResponseEntity.noContent().build();
     }
 }

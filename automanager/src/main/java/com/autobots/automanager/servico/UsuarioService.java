@@ -30,6 +30,10 @@ public interface UsuarioService {
     Credencial associarCredencial(Long usuarioId, Long credencialId);
     void desassociarCredencial(Long usuarioId, Long credencialId);
 
+    List<Veiculo> listarVeiculos(Long usuarioId);
     Veiculo associarVeiculo(Long usuarioId, Long veiculoId);
     void desassociarVeiculo(Long usuarioId, Long veiculoId);
+
+    // Usado por EmpresaService ao remover uma empresa
+    void desassociarEmpresa(Long usuarioId);
 }
