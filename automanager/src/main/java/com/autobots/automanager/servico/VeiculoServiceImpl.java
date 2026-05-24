@@ -3,6 +3,7 @@ package com.autobots.automanager.servico;
 import com.autobots.automanager.dto.requisicao.VeiculoRequest;
 import com.autobots.automanager.entidade.Usuario;
 import com.autobots.automanager.entidade.Veiculo;
+import com.autobots.automanager.excecao.RecursoJaVinculadoException;
 import com.autobots.automanager.excecao.ResourceNotFoundException;
 import com.autobots.automanager.excecao.UsuarioNaoEncontradoException;
 import com.autobots.automanager.excecao.VeiculoBloqueadoException;
@@ -27,6 +28,10 @@ public class VeiculoServiceImpl implements VeiculoService {
 
     @Override
     public Veiculo criarVeiculo(VeiculoRequest request) {
+        if (repositorioVeiculo.existsByPlaca(request.getPlaca())) {
+            throw new RecursoJaVinculadoException(
+                    "Já existe um veículo com a placa '" + request.getPlaca() + "'.");
+        }
         Usuario proprietario = repositorioUsuario.findById(request.getProprietarioId())
                 .orElseThrow(() -> new UsuarioNaoEncontradoException(request.getProprietarioId()));
         return repositorioVeiculo.save(veiculoMapper.toEntity(request, proprietario));
@@ -50,6 +55,10 @@ public class VeiculoServiceImpl implements VeiculoService {
     @Override
     public Veiculo atualizarVeiculo(Long id, Veiculo veiculoAtualizado) {
         Veiculo veiculo = obterVeiculo(id);
+        if (repositorioVeiculo.existsByPlacaAndIdNot(veiculoAtualizado.getPlaca(), id)) {
+            throw new RecursoJaVinculadoException(
+                    "Já existe um veículo com a placa '" + veiculoAtualizado.getPlaca() + "'.");
+        }
         veiculo.setTipo(veiculoAtualizado.getTipo());
         veiculo.setModelo(veiculoAtualizado.getModelo());
         veiculo.setPlaca(veiculoAtualizado.getPlaca());

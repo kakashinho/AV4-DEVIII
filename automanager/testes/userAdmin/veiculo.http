@@ -1,45 +1,60 @@
 @baseUrl = http://localhost:8080/api
 
+### Login ADMIN
+# @name loginAdmin
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{ "nomeUsuario": "admin", "senha": "123456" }
+
 # VEICULOS
 
+###
 # LISTAR VEICULOS OK
 GET {{baseUrl}}/veiculos
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR VEICULO EXISTENTE OK
 GET {{baseUrl}}/veiculos/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR VEICULO INEXISTENTE OK
 GET {{baseUrl}}/veiculos/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR VEICULO COM ID INVALIDO
 GET {{baseUrl}}/veiculos/abc
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR VEICULO COM ID NEGATIVO
 GET {{baseUrl}}/veiculos/-1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR VEICULO COM ID ZERO
 GET {{baseUrl}}/veiculos/0
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # CRIAR VEICULO VALIDO OK
 POST {{baseUrl}}/veiculos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "tipo": "HATCH",
   "modelo": "Civic",
-  "placa": "ABC1D23",
+  "placa": "ABC1D25",
   "proprietarioId": 1
 }
 
@@ -48,9 +63,10 @@ Content-Type: application/json
 # CRIAR VEICULO SEM PROPRIETARIO (ERRO)
 POST {{baseUrl}}/veiculos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
-  "tipo": "CARRO",
+  "tipo": "PICKUP",
   "modelo": "Civic",
   "placa": "ABC1D23"
 }
@@ -60,11 +76,12 @@ Content-Type: application/json
 # CRIAR VEICULO COM PROPRIETARIO INVALIDO
 POST {{baseUrl}}/veiculos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
-  "tipo": "CARRO",
+  "tipo": "PICKUP",
   "modelo": "Civic",
-  "placa": "ABC1D23",
+  "placa": "ABC1D29",
   "proprietarioId": 999999
 }
 
@@ -73,6 +90,7 @@ Content-Type: application/json
 # CRIAR VEICULO COM BODY VAZIO
 POST {{baseUrl}}/veiculos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {}
 
@@ -81,9 +99,10 @@ Content-Type: application/json
 # CRIAR VEICULO COM JSON INVALIDO
 POST {{baseUrl}}/veiculos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
-  "tipo": "CARRO",
+  "tipo": "PICKUP",
   "modelo": "Civic",
   "placa": "ABC1D23",
 }
@@ -93,9 +112,10 @@ Content-Type: application/json
 # CRIAR VEICULO COM CONTENT TYPE ERRADO
 POST {{baseUrl}}/veiculos
 Content-Type: text/plain
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
-  "tipo": "CARRO",
+  "tipo": "PICKUP",
   "modelo": "Civic",
   "placa": "ABC1D23",
   "proprietarioId": 1
@@ -106,12 +126,12 @@ Content-Type: text/plain
 # ATUALIZAR VEICULO VALIDO
 PUT {{baseUrl}}/veiculos/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "tipo": "PICKUP",
   "modelo": "CB 500",
-  "placa": "XYZ9A88",
-  "proprietarioId": 2
+  "placa": "XYZ9A88"
 }
 
 ###
@@ -119,6 +139,7 @@ Content-Type: application/json
 # ATUALIZAR VEICULO PARCIAL
 PUT {{baseUrl}}/veiculos/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "modelo": "Civic Touring"
@@ -129,6 +150,7 @@ Content-Type: application/json
 # ATUALIZAR VEICULO COM ID INVALIDO
 PUT {{baseUrl}}/veiculos/abc
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "modelo": "Civic Touring"
@@ -139,6 +161,7 @@ Content-Type: application/json
 # ATUALIZAR VEICULO COM ID NEGATIVO
 PUT {{baseUrl}}/veiculos/-1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "modelo": "Civic Touring"
@@ -148,31 +171,37 @@ Content-Type: application/json
 
 # DELETAR VEICULO VALIDO
 DELETE {{baseUrl}}/veiculos/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DELETAR VEICULO INEXISTENTE
 DELETE {{baseUrl}}/veiculos/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DELETAR VEICULO COM ID INVALIDO
 DELETE {{baseUrl}}/veiculos/abc
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DELETAR VEICULO COM ID NEGATIVO
 DELETE {{baseUrl}}/veiculos/-1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DELETAR VEICULO COM ID ZERO
 DELETE {{baseUrl}}/veiculos/0
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # TESTE HATEOAS
 GET {{baseUrl}}/veiculos/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
@@ -185,38 +214,44 @@ GET {{baseUrl}}/veiculos/1
 # Criar veículo para usuário 1
 POST {{baseUrl}}/veiculos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "tipo": "HATCH",
   "modelo": "Civic",
-  "placa": "ABC1234",
-  "proprietarioId": 3
+  "placa": "ABC1235",
+  "proprietarioId": 1
 }
 
 ###
 
 # Ver veículo com proprietário atual
 GET {{baseUrl}}/veiculos/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # "DESASSOCIAR" (TRANSFERIR para outro usuário)
 PUT {{baseUrl}}/veiculos/1/proprietario/2
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # Ver veículo após transferência
 GET {{baseUrl}}/veiculos/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # Transferência de volta (novo ciclo)
-PUT {{baseUrl}}/veiculos/1/proprietario/2
+PUT {{baseUrl}}/veiculos/1/proprietario/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # Tentativa de transferência para usuário inexistente (erro)
 PUT {{baseUrl}}/veiculos/1/proprietario/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
@@ -227,6 +262,7 @@ PUT {{baseUrl}}/veiculos/1/proprietario/999999
 # Atualizar veículo sem mexer no proprietário
 PUT {{baseUrl}}/veiculos/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "tipo": "MOTO",
@@ -238,5 +274,6 @@ Content-Type: application/json
 
 # Ver estado final
 GET {{baseUrl}}/veiculos/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###

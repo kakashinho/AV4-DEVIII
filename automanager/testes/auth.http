@@ -1,0 +1,65 @@
+@baseUrl = http://localhost:8080
+#ok
+
+### Login ADMIN
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "nomeUsuario": "admin", "senha": "123456" }
+
+
+### Login GERENTE
+# @name loginGerente
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "nomeUsuario": "gerente", "senha": "123456" }
+
+
+### Login VENDEDOR
+# @name loginVendedor
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "nomeUsuario": "vendedor", "senha": "123456" }
+
+
+### Login CLIENTE
+# @name loginCliente
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "nomeUsuario": "cliente", "senha": "123456" }
+
+
+### Body vazio → 400 Bad Request
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{}
+
+
+### Token ADMIN válido
+GET {{baseUrl}}/api/usuarios
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+###
+
+### Token GERENTE válido
+GET {{baseUrl}}/api/usuarios
+Authorization: Bearer {{loginGerente.response.body.token}}
+
+###
+
+### Token VENDEDOR válido
+GET {{baseUrl}}/api/usuarios
+Authorization: Bearer {{loginVendedor.response.body.token}}
+
+### CLIENTE não acessa lista de usuários → 403
+GET {{baseUrl}}/api/usuarios
+Authorization: Bearer {{loginCliente.response.body.token}}
+
+### CLIENTE acessa suas informações de usuário
+GET {{baseUrl}}/api/usuarios/5
+Authorization: Bearer {{loginCliente.response.body.token}}

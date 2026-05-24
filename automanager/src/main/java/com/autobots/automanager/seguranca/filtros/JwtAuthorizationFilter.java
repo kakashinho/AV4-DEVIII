@@ -2,6 +2,8 @@ package com.autobots.automanager.seguranca.filtros;
 
 import java.io.IOException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,6 +11,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.autobots.automanager.seguranca.adaptadores.UserDetailsServiceCodigoBarraImpl;
 import com.autobots.automanager.seguranca.adaptadores.UserDetailsServiceImpl;
 import com.autobots.automanager.seguranca.jwt.JwtService;
 
@@ -20,12 +23,18 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthorizationFilter.class);
+
     private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsService;
+    private final UserDetailsServiceCodigoBarraImpl userDetailsServiceCodigoBarra;
 
-    public JwtAuthorizationFilter(JwtService jwtService, UserDetailsServiceImpl userDetailsService) {
+    public JwtAuthorizationFilter(JwtService jwtService,
+                                  UserDetailsServiceImpl userDetailsService,
+                                  UserDetailsServiceCodigoBarraImpl userDetailsServiceCodigoBarra) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
+        this.userDetailsServiceCodigoBarra = userDetailsServiceCodigoBarra;
     }
 
     @Override
@@ -47,9 +56,11 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             String nomeUsuario = jwtService.extrairNomeUsuario(jwt);
 
             if (nomeUsuario != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(nomeUsuario);
+                UserDetails userDetails = nomeUsuario.startsWith("CB:")
+                        ? userDetailsServiceCodigoBarra.loadUserByCodigo(Long.parseLong(nomeUsuario.substring(3)))
+                        : userDetailsService.loadUserByUsername(nomeUsuario);
 
-                if (jwtService.validarToken(jwt, userDetails)) {
+                if (jwtService.validarToken(jwt, userDetails) && userDetails.isEnabled()) {
                     UsernamePasswordAuthenticationToken autenticacao =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails, null, userDetails.getAuthorities());
@@ -58,8 +69,12 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(autenticacao);
                 }
             }
-        } catch (Exception ignorado) {
-            // Token inválido ou expirado — continua sem autenticação (Spring retorna 401/403)
+        } catch (io.jsonwebtoken.ExpiredJwtException ex) {
+            log.warn("JWT expirado: {}", ex.getMessage());
+        } catch (io.jsonwebtoken.JwtException ex) {
+            log.warn("JWT inválido: {}", ex.getMessage());
+        } catch (Exception ex) {
+            log.warn("Falha ao processar JWT [{}]: {}", ex.getClass().getSimpleName(), ex.getMessage());
         }
 
         chain.doFilter(request, response);

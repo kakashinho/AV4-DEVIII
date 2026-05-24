@@ -3,6 +3,7 @@ package com.autobots.automanager.servico;
 import com.autobots.automanager.dto.requisicao.EnderecoRequest;
 import com.autobots.automanager.dto.resposta.EnderecoResponse;
 import com.autobots.automanager.entidade.Endereco;
+import com.autobots.automanager.excecao.EnderecoAssociadoException;
 import com.autobots.automanager.excecao.ResourceNotFoundException;
 import com.autobots.automanager.mapeador.EnderecoMapper;
 import com.autobots.automanager.repositorio.RepositorioEndereco;
@@ -51,7 +52,11 @@ public class EnderecoServiceImpl implements EnderecoService {
     @Override
     @Transactional
     public void remover(Long id) {
-        repositorio.delete(obter(id));
+        Endereco endereco = obter(id);
+        if (repositorio.existeAssociadoAEmpresa(id) || repositorio.existeAssociadoAUsuario(id)) {
+            throw new EnderecoAssociadoException(id);
+        }
+        repositorio.delete(endereco);
     }
 
     private Endereco obter(Long id) {

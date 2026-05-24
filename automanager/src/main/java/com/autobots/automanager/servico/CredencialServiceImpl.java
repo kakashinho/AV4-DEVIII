@@ -4,6 +4,7 @@ import com.autobots.automanager.dto.requisicao.CredencialRequest;
 import com.autobots.automanager.dto.requisicao.CredencialUpdateRequest;
 import com.autobots.automanager.entidade.Credencial;
 import com.autobots.automanager.entidade.CredencialUsuarioSenha;
+import java.time.LocalDateTime;
 import com.autobots.automanager.excecao.CredencialAssociadaException;
 import com.autobots.automanager.excecao.CredencialDuplicadaException;
 import com.autobots.automanager.excecao.CredencialNaoEncontradaException;
@@ -63,6 +64,9 @@ public class CredencialServiceImpl implements CredencialService {
     public Credencial atualizar(Long id, CredencialUpdateRequest request) {
         Credencial cred = buscarPorId(id);
         cred.setInativo(request.getInativo());
+        if (cred instanceof CredencialUsuarioSenha cus && request.getSenha() != null) {
+            cus.setSenha(passwordEncoder.encode(request.getSenha()));
+        }
         return repositorio.save(cred);
     }
 
@@ -74,5 +78,13 @@ public class CredencialServiceImpl implements CredencialService {
             throw new CredencialAssociadaException(id);
         }
         repositorio.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public void registrarAcesso(Long credencialId) {
+        Credencial cred = buscarPorId(credencialId);
+        cred.setUltimoAcesso(LocalDateTime.now());
+        repositorio.save(cred);
     }
 }

@@ -71,7 +71,10 @@ public class ServicoServiceImpl implements ServicoService {
     @Override
     @Transactional
     public void remover(Long id) {
-        obterEntidade(id);
+        Servico servico = obterEntidade(id);
+        if (servico.getEmpresa() != null) {
+            throw new ServicoEmUsoException(id);
+        }
         if (repositorioVenda.existsByServicosServicoId(id)) {
             throw new ServicoEmUsoException(id);
         }

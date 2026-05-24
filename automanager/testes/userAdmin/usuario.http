@@ -1,0 +1,239 @@
+### Variável base
+@baseUrl = http://localhost:8080/api/usuarios
+@usuarioId = 1
+
+### Login ADMIN
+# @name login
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{ "nomeUsuario": "admin", "senha": "123456" }
+
+### Login VENDEDOR
+# @name login
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{ "nomeUsuario": "vendedor", "senha": "123456" }
+
+
+### Login CLIENTE
+# @name login
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{ "nomeUsuario": "cliente", "senha": "123456" }
+
+
+
+###
+
+# =========================
+# LISTAR USUÁRIOS
+# =========================
+GET {{baseUrl}}
+Accept: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+###
+
+# =========================
+# BUSCAR USUÁRIO POR ID
+# =========================
+GET {{baseUrl}}/1
+Accept: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+###
+
+# =========================
+# CRIAR USUÁRIO (CASO VÁLIDO MÍNIMO)
+# =========================
+POST {{baseUrl}}
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "nome": "João Silva",
+  "nomeSocial": "João",
+  "perfis": ["ROLE_CLIENTE"]
+}
+
+###
+
+# =========================
+# CRIAR USUÁRIO (SEM PERFIL → ERRO ESPERADO) OK
+# =========================
+POST {{baseUrl}}
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "nome": "Erro Perfil"
+}
+
+###
+
+# =========================
+# CRIAR USUÁRIO (SEM NOME → ERRO) OK
+# =========================
+POST {{baseUrl}}
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "nomeSocial": "Teste",
+  "perfis": ["ROLE_VENDEDOR"]
+}
+
+###
+
+# CRIAR USUÁRIO
+POST {{baseUrl}}
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "nome": "Teste",
+  "perfis": ["ROLE_CLIENTE"]
+}
+
+# =========================
+# ATUALIZAR USUÁRIO
+# =========================
+
+###
+PUT {{baseUrl}}/{{usuarioId}}
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "nome": "Nome Atualizado",
+  "nomeSocial": "Atualizado",
+  "perfis": ["ROLE_VENDEDOR"]
+}
+
+###
+
+# =========================
+# REMOVER USUÁRIO
+# =========================
+DELETE {{baseUrl}}/10
+Authorization: Bearer {{login.response.body.token}}
+
+### =========================================================
+### NOME NULL OK
+### =========================================================
+POST {{baseUrl}}
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "nome": null,
+  "perfis": ["ROLE_CLIENTE"]
+}
+
+###
+
+### =========================================================
+### NOME EM BRANCO OK
+### =========================================================
+POST {{baseUrl}}
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "nome": "",
+  "perfis": ["ROLE_CLIENTE"]
+}
+
+###
+
+### =========================================================
+### PERFIS VAZIO OK
+### =========================================================
+POST {{baseUrl}}
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "nome": "Usuario Sem Perfil",
+  "perfis": []
+}
+
+###
+
+### =========================================================
+### PERFIS NULL OK
+### =========================================================
+POST {{baseUrl}}
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "nome": "Usuario Sem Perfil",
+  "perfis": null
+}
+
+###
+
+### =========================================================
+### EMAIL INVÁLIDO OK
+### =========================================================
+POST {{baseUrl}}/{{usuarioId}}/emails
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "emailId": 5
+}
+
+###
+
+### =========================================================
+### EMAIL NULL OK
+### =========================================================
+POST {{baseUrl}}/{{usuarioId}}/emails
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "emailId": null
+}
+
+###
+
+### =========================================================
+### EMAIL EM BRANCO OK
+### =========================================================
+POST {{baseUrl}}/{{usuarioId}}/emails
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "emailId": ""
+}
+
+
+### =========================================================
+### BUSCAR USUÁRIO INEXISTENTE
+### Esperado: 404
+### =========================================================
+GET {{baseUrl}}/999999
+Authorization: Bearer {{login.response.body.token}}
+
+
+### =========================================================
+### REMOVER USUÁRIO EXISTENTE
+### =========================================================
+DELETE {{baseUrl}}/{{usuarioId}}
+Authorization: Bearer {{login.response.body.token}}
+
+###
+
+### =========================================================
+### REMOVER USUÁRIO INEXISTENTE
+### Esperado: 404
+### =========================================================
+DELETE {{baseUrl}}/999999
+Authorization: Bearer {{login.response.body.token}}

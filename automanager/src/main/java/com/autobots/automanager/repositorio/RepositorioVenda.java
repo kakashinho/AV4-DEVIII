@@ -31,6 +31,15 @@ public interface RepositorioVenda extends JpaRepository<Venda, Long> {
     @Query("SELECT DISTINCT v FROM Venda v LEFT JOIN FETCH v.itens WHERE v.empresaId = :empresaId")
     List<Venda> findByEmpresaIdComItens(@Param("empresaId") Long empresaId);
 
+    @Query("SELECT DISTINCT v FROM Venda v LEFT JOIN FETCH v.itens WHERE v.funcionarioId = :funcionarioId")
+    List<Venda> findByFuncionarioIdComItens(@Param("funcionarioId") Long funcionarioId);
+
+    @Query("SELECT DISTINCT v FROM Venda v LEFT JOIN FETCH v.itens WHERE v.clienteId = :clienteId")
+    List<Venda> findByClienteIdComItens(@Param("clienteId") Long clienteId);
+
+    @Query("SELECT DISTINCT v FROM Venda v LEFT JOIN FETCH v.itens WHERE v.clienteId = :usuarioId OR v.funcionarioId = :usuarioId")
+    List<Venda> findByUsuarioIdComItens(@Param("usuarioId") Long usuarioId);
+
     @Query("SELECT DISTINCT v FROM Venda v LEFT JOIN FETCH v.itens WHERE v.id = :id AND v.empresaId = :empresaId")
     Optional<Venda> findByIdAndEmpresaIdComItens(@Param("id") Long id, @Param("empresaId") Long empresaId);
 

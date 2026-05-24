@@ -21,9 +21,11 @@ import com.autobots.automanager.dto.resposta.VendaResponse;
 import com.autobots.automanager.entidade.Empresa;
 import com.autobots.automanager.entidade.Mercadoria;
 import com.autobots.automanager.entidade.Servico;
+import com.autobots.automanager.entidade.Telefone;
 import com.autobots.automanager.entidade.Usuario;
 import com.autobots.automanager.entidade.Venda;
 import com.autobots.automanager.enumeracao.PerfilUsuario;
+import org.springframework.security.core.Authentication;
 import com.autobots.automanager.excecao.EmpresaComVendasException;
 import com.autobots.automanager.excecao.EmpresaNaoEncontradaException;
 import com.autobots.automanager.excecao.MercadoriaEmUsoException;
@@ -39,9 +41,12 @@ import com.autobots.automanager.mapeador.EmpresaMapper;
 import com.autobots.automanager.mapeador.MercadoriaMapper;
 import com.autobots.automanager.mapeador.ServicoMapper;
 import com.autobots.automanager.mapeador.VendaMapper;
+import com.autobots.automanager.excecao.TelefoneNaoEncontradoException;
 import com.autobots.automanager.repositorio.RepositorioEmpresa;
+import com.autobots.automanager.repositorio.RepositorioEndereco;
 import com.autobots.automanager.repositorio.RepositorioMercadoria;
 import com.autobots.automanager.repositorio.RepositorioServico;
+import com.autobots.automanager.repositorio.RepositorioTelefone;
 import com.autobots.automanager.repositorio.RepositorioUsuario;
 import com.autobots.automanager.repositorio.RepositorioVenda;
 
@@ -53,6 +58,8 @@ public class EmpresaServiceImpl implements EmpresaService {
     private final RepositorioMercadoria mercadoriaRepo;
     private final RepositorioServico servicoRepo;
     private final RepositorioVenda vendaRepo;
+    private final RepositorioTelefone telefoneRepo;
+    private final RepositorioEndereco enderecoRepo;
     private final EmpresaMapper mapper;
     private final MercadoriaMapper mercadoriaMapper;
     private final ServicoMapper servicoMapper;
@@ -67,6 +74,8 @@ public class EmpresaServiceImpl implements EmpresaService {
             RepositorioMercadoria mercadoriaRepo,
             RepositorioServico servicoRepo,
             RepositorioVenda vendaRepo,
+            RepositorioTelefone telefoneRepo,
+            RepositorioEndereco enderecoRepo,
             EmpresaMapper mapper,
             MercadoriaMapper mercadoriaMapper,
             ServicoMapper servicoMapper,
@@ -80,6 +89,8 @@ public class EmpresaServiceImpl implements EmpresaService {
         this.mercadoriaRepo = mercadoriaRepo;
         this.servicoRepo = servicoRepo;
         this.vendaRepo = vendaRepo;
+        this.telefoneRepo = telefoneRepo;
+        this.enderecoRepo = enderecoRepo;
         this.mapper = mapper;
         this.mercadoriaMapper = mercadoriaMapper;
         this.servicoMapper = servicoMapper;
@@ -89,7 +100,7 @@ public class EmpresaServiceImpl implements EmpresaService {
         this.vendaService = vendaService;
     }
 
-    // ─── CRUD principal ───────────────────────────────────────────────────────
+    //  CRUD principal 
 
     @Override
     @Transactional(readOnly = true)
@@ -139,7 +150,7 @@ public class EmpresaServiceImpl implements EmpresaService {
         repositorio.delete(empresa);
     }
 
-    // ─── Usuários da empresa ──────────────────────────────────────────────────
+    //  Usuários da empresa 
 
     @Override
     @Transactional(readOnly = true)
@@ -182,7 +193,43 @@ public class EmpresaServiceImpl implements EmpresaService {
         usuarioRepo.save(usuario);
     }
 
-    // ─── Mercadorias da empresa ───────────────────────────────────────────────
+    //  Telefones da empresa
+
+    @Override
+    @Transactional
+    public void associarTelefone(Long empresaId, Long telefoneId) {
+        Empresa empresa = obterEntidade(empresaId);
+        Telefone telefone = telefoneRepo.findById(telefoneId)
+                .orElseThrow(() -> new TelefoneNaoEncontradoException(telefoneId));
+        if (empresa.getTelefones().stream().anyMatch(t -> t.getId().equals(telefoneId))) {
+            throw new RecursoJaVinculadoException("Telefone " + telefoneId + " já está vinculado à empresa " + empresaId);
+        }
+        empresa.getTelefones().add(telefone);
+        repositorio.save(empresa);
+    }
+
+    @Override
+    @Transactional
+    public void desassociarTelefone(Long empresaId, Long telefoneId) {
+        Empresa empresa = obterEntidade(empresaId);
+        boolean removido = empresa.getTelefones().removeIf(t -> t.getId().equals(telefoneId));
+        if (!removido) {
+            throw new TelefoneNaoEncontradoException(telefoneId);
+        }
+        repositorio.save(empresa);
+    }
+
+    //  Endereço da empresa
+
+    @Override
+    @Transactional
+    public void removerEndereco(Long empresaId) {
+        Empresa empresa = obterEntidade(empresaId);
+        empresa.setEndereco(null);
+        repositorio.save(empresa);
+    }
+
+    //  Mercadorias da empresa
 
     @Override
     @Transactional(readOnly = true)
@@ -231,7 +278,7 @@ public class EmpresaServiceImpl implements EmpresaService {
         mercadoriaRepo.save(mercadoria);
     }
 
-    // ─── Serviços da empresa ──────────────────────────────────────────────────
+    //  Serviços da empresa 
 
     @Override
     @Transactional(readOnly = true)
@@ -282,7 +329,7 @@ public class EmpresaServiceImpl implements EmpresaService {
         servicoRepo.save(servico);
     }
 
-    // ─── Vendas da empresa — retornam DTOs (entidade JPA não cruza fronteira) ─
+    //  Vendas da empresa — retornam DTOs (entidade JPA não cruza fronteira) 
 
     @Override
     @Transactional(readOnly = true)
@@ -308,10 +355,10 @@ public class EmpresaServiceImpl implements EmpresaService {
 
     @Override
     @Transactional
-    public VendaResponse criarVenda(Long empresaId, VendaRequest request) {
+    public VendaResponse criarVenda(Long empresaId, VendaRequest request, Authentication authentication) {
         obterEntidade(empresaId);
         request.setEmpresaId(empresaId);
-        Venda venda = vendaService.criarVenda(request);
+        Venda venda = vendaService.criarVenda(request, authentication);
         return vendaMapper.toResponse(venda);
     }
 
@@ -340,7 +387,7 @@ public class EmpresaServiceImpl implements EmpresaService {
                 "Vendas são registros imutáveis vinculados permanentemente à empresa que as realizou.");
     }
 
-    // ─── Apoio / privados ─────────────────────────────────────────────────────
+    //  Apoio / privados 
 
     @Override
     @Transactional(readOnly = true)

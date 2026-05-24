@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,7 @@ import com.autobots.automanager.porta.UsuarioPort;
 import com.autobots.automanager.porta.VeiculoInfo;
 import com.autobots.automanager.porta.VeiculoPort;
 import com.autobots.automanager.repositorio.RepositorioEmpresa;
+import com.autobots.automanager.repositorio.RepositorioUsuario;
 import com.autobots.automanager.repositorio.RepositorioVenda;
 
 @Service
@@ -40,6 +42,7 @@ public class VendaServiceImpl implements VendaService {
 
     @Autowired private RepositorioVenda repositorioVenda;
     @Autowired private RepositorioEmpresa repositorioEmpresa;
+    @Autowired private RepositorioUsuario repositorioUsuario;
     @Autowired private UsuarioPort usuarioPort;
     @Autowired private VeiculoPort veiculoPort;
     @Autowired private MercadoriaPort mercadoriaPort;
@@ -48,24 +51,93 @@ public class VendaServiceImpl implements VendaService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Venda> listarVendas() {
-        List<Venda> vendas = repositorioVenda.findAllComItens();
-        // Inicializa servicos dentro da transação (evita LazyInitializationException no controller)
+    public List<Venda> listarVendas(Authentication authentication) {
+        boolean isAdmin   = hasRole(authentication, "ROLE_ADMIN");
+        boolean isGerente = hasRole(authentication, "ROLE_GERENTE");
+
+        List<Venda> vendas;
+        if (isAdmin || isGerente) {
+            vendas = repositorioVenda.findAllComItens();
+        } else {
+            Long usuarioId = resolverUsuarioId(authentication);
+
+            if (hasRole(authentication, "ROLE_VENDEDOR")) {
+                vendas = repositorioVenda.findByFuncionarioIdComItens(usuarioId);
+            } else {
+                // CLIENTE — vê apenas suas próprias compras
+                vendas = repositorioVenda.findByClienteIdComItens(usuarioId);
+            }
+        }
         vendas.forEach(v -> v.getServicos().size());
         return vendas;
     }
 
+    private boolean hasRole(Authentication auth, String role) {
+        return auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(role));
+    }
+
+    private Long resolverUsuarioId(Authentication authentication) {
+        String subject = authentication.getName();
+        if (subject.startsWith("CB:")) {
+            long codigo = Long.parseLong(subject.substring(3));
+            return repositorioUsuario.findByCredencialCodigoBarra(codigo)
+                    .map(u -> u.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Usuário autenticado não encontrado para código: " + codigo));
+        }
+        return repositorioUsuario.findByCredencialNomeUsuario(subject)
+                .map(u -> u.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Usuário autenticado não encontrado: " + subject));
+    }
+
     @Override
     @Transactional(readOnly = true)
-    public Venda obterVenda(Long id) {
+    public Venda obterVenda(Long id, Authentication authentication) {
         Venda venda = repositorioVenda.findByIdComItens(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Venda não encontrada com id: " + id));
         venda.getServicos().size();
+        boolean isAdmin   = hasRole(authentication, "ROLE_ADMIN");
+        boolean isGerente = hasRole(authentication, "ROLE_GERENTE");
+        if (!isAdmin && !isGerente) {
+            Long usuarioId = resolverUsuarioId(authentication);
+            if (hasRole(authentication, "ROLE_VENDEDOR")) {
+                if (!usuarioId.equals(venda.getFuncionarioId())) {
+                    throw new org.springframework.security.access.AccessDeniedException(
+                            "VENDEDOR só pode visualizar as próprias vendas");
+                }
+            } else {
+                // CLIENTE
+                if (!usuarioId.equals(venda.getClienteId())) {
+                    throw new org.springframework.security.access.AccessDeniedException(
+                            "CLIENTE só pode visualizar as próprias vendas");
+                }
+            }
+        }
         return venda;
     }
 
     @Override
-    public Venda criarVenda(VendaRequest request) {
+    public Venda criarVenda(VendaRequest request, Authentication authentication) {
+        // VENDEDOR só pode registrar vendas em seu próprio nome
+        if (hasRole(authentication, "ROLE_VENDEDOR")
+                && !hasRole(authentication, "ROLE_ADMIN")
+                && !hasRole(authentication, "ROLE_GERENTE")) {
+            Long funcionarioLogadoId = resolverUsuarioId(authentication);
+            if (request.getFuncionarioId() == null) {
+                request.setFuncionarioId(funcionarioLogadoId);
+            } else if (!funcionarioLogadoId.equals(request.getFuncionarioId())) {
+                throw new org.springframework.security.access.AccessDeniedException(
+                        "VENDEDOR só pode criar vendas para si mesmo. Use seu próprio ID como funcionarioId.");
+            }
+        }
+
+        // ADMIN/GERENTE devem informar o funcionarioId explicitamente
+        if (request.getFuncionarioId() == null) {
+            throw new VendaNaoValidaException("Venda inválida",
+                    List.of(new ErroDeCampo("funcionarioId", "Funcionário é obrigatório")));
+        }
+
         List<ErroDeCampo> erros = new ArrayList<>();
         DadosVenda dados = resolverDados(request, erros);
         validarRegrasNegocio(request, dados, erros);
@@ -116,11 +188,20 @@ public class VendaServiceImpl implements VendaService {
     }
 
     @Override
-    public Venda atualizarVenda(Long id, VendaRequest request) {
-        Venda venda = obterVenda(id);
+    public Venda atualizarVenda(Long id, VendaRequest request, Authentication authentication) {
+        Venda venda = repositorioVenda.findByIdComItens(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Venda não encontrada com id: " + id));
+        venda.getServicos().size();
 
-        if (venda.getStatus() == StatusVenda.FECHADA) {
-            throw new VendaNaoValidaException("Venda fechada não pode ser alterada", List.of());
+        if (venda.getStatus() == StatusVenda.FECHADA || venda.getStatus() == StatusVenda.CANCELADA) {
+            throw new VendaNaoValidaException(
+                    "Venda com status " + venda.getStatus() + " não pode ser alterada", List.of());
+        }
+
+        // ADMIN/GERENTE devem informar o funcionarioId explicitamente
+        if (request.getFuncionarioId() == null) {
+            throw new VendaNaoValidaException("Venda inválida",
+                    List.of(new ErroDeCampo("funcionarioId", "Funcionário é obrigatório")));
         }
 
         List<ErroDeCampo> erros = new ArrayList<>();
@@ -180,9 +261,17 @@ public class VendaServiceImpl implements VendaService {
 
     @Override
     public void excluirVenda(Long id) {
-        // Dentro de @Transactional — lazy load de itens funciona naturalmente
-        Venda venda = repositorioVenda.findById(id)
+        // JOIN FETCH garante que itens está na sessão — cascade ALL + orphanRemoval deleta em cascata
+        Venda venda = repositorioVenda.findByIdComItens(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Venda não encontrada com id: " + id));
+        // inicializa servicos na mesma sessão para o cascade alcançar itens_servico_venda
+        venda.getServicos().size();
+
+        if (venda.getStatus() == StatusVenda.FECHADA || venda.getStatus() == StatusVenda.CANCELADA) {
+            throw new VendaNaoValidaException(
+                    "Venda com status " + venda.getStatus() + " não pode ser excluída", List.of());
+        }
+
         List<ItemVendaEntry> itens = venda.getItens().stream()
                 .map(i -> new ItemVendaEntry(buscarMercadoriaPorId(i.getMercadoriaId()), i.getQuantidade()))
                 .toList();
@@ -190,7 +279,7 @@ public class VendaServiceImpl implements VendaService {
         repositorioVenda.delete(venda);
     }
 
-    // ─── Resolução de dados (acumula erros) ──────────────────────────────────
+    //  Resolução de dados (acumula erros) 
 
     private DadosVenda resolverDados(VendaRequest request, List<ErroDeCampo> erros) {
         DadosVenda d = new DadosVenda();
@@ -274,7 +363,7 @@ public class VendaServiceImpl implements VendaService {
         return d;
     }
 
-    // ─── Regras de negócio (acumuladas) ──────────────────────────────────────
+    //  Regras de negócio (acumuladas) 
 
     private void validarRegrasNegocio(VendaRequest request, DadosVenda d, List<ErroDeCampo> erros) {
         if (d.cliente != null && !d.cliente.perfis().contains(PerfilUsuario.ROLE_CLIENTE)) {
@@ -315,7 +404,7 @@ public class VendaServiceImpl implements VendaService {
         }
     }
 
-    // ─── Estoque ──────────────────────────────────────────────────────────────
+    //  Estoque 
 
     private void abaterEstoque(List<ItemVendaEntry> itens) {
         for (ItemVendaEntry entry : itens) {
@@ -359,7 +448,7 @@ public class VendaServiceImpl implements VendaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Mercadoria " + id + " não encontrada"));
     }
 
-    // ─── Tipos internos ───────────────────────────────────────────────────────
+    //  Tipos internos 
 
     private static class DadosVenda {
         Long clienteId;

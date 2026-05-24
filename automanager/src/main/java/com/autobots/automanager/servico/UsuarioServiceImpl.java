@@ -1,5 +1,14 @@
 package com.autobots.automanager.servico;
 
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.autobots.automanager.dto.requisicao.EnderecoRequest;
 import com.autobots.automanager.dto.requisicao.UsuarioRequest;
 import com.autobots.automanager.dto.requisicao.UsuarioUpdateRequest;
 import com.autobots.automanager.entidade.Credencial;
@@ -9,6 +18,8 @@ import com.autobots.automanager.entidade.Endereco;
 import com.autobots.automanager.entidade.Telefone;
 import com.autobots.automanager.entidade.Usuario;
 import com.autobots.automanager.entidade.Veiculo;
+import com.autobots.automanager.entidade.Venda;
+import com.autobots.automanager.enumeracao.PerfilUsuario;
 import com.autobots.automanager.excecao.CredencialNaoEncontradaException;
 import com.autobots.automanager.excecao.DocumentoNaoEncontradoException;
 import com.autobots.automanager.excecao.EmailNaoEncontradoException;
@@ -17,6 +28,7 @@ import com.autobots.automanager.excecao.ResourceNotFoundException;
 import com.autobots.automanager.excecao.TelefoneNaoEncontradoException;
 import com.autobots.automanager.excecao.UsuarioComVendasException;
 import com.autobots.automanager.excecao.UsuarioNaoEncontradoException;
+import com.autobots.automanager.mapeador.EnderecoMapper;
 import com.autobots.automanager.mapeador.UsuarioMapper;
 import com.autobots.automanager.repositorio.RepositorioCredencial;
 import com.autobots.automanager.repositorio.RepositorioDocumento;
@@ -26,10 +38,6 @@ import com.autobots.automanager.repositorio.RepositorioTelefone;
 import com.autobots.automanager.repositorio.RepositorioUsuario;
 import com.autobots.automanager.repositorio.RepositorioVeiculo;
 import com.autobots.automanager.repositorio.RepositorioVenda;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 public class UsuarioServiceImpl implements UsuarioService {
@@ -65,11 +73,12 @@ public class UsuarioServiceImpl implements UsuarioService {
         this.mapper = mapper;
     }
 
-    // ─── CRUD principal ───────────────────────────────────────────────────────
+    //  CRUD principal
 
     @Override
     @Transactional
-    public Usuario cadastrar(UsuarioRequest request) {
+    public Usuario cadastrar(UsuarioRequest request, Authentication authentication) {
+        validarHierarquiaPerfis(request.getPerfis(), authentication);
         Usuario usuario = mapper.paraEntidade(request);
         return repositorio.save(usuario);
     }
@@ -90,8 +99,18 @@ public class UsuarioServiceImpl implements UsuarioService {
     // /usuarios/{id}/<recurso>. enderecoId null = manter endereço existente.
     @Override
     @Transactional
-    public Usuario atualizar(Long id, UsuarioUpdateRequest request) {
+    public Usuario atualizar(Long id, UsuarioUpdateRequest request, Authentication authentication) {
         Usuario usuario = buscarPorId(id);
+
+        boolean isVendedor = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_VENDEDOR"));
+        boolean isAdminOuGerente = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")
+                            || a.getAuthority().equals("ROLE_GERENTE"));
+        if (isVendedor && !isAdminOuGerente
+                && !usuario.getPerfis().contains(PerfilUsuario.ROLE_CLIENTE)) {
+            throw new AccessDeniedException("VENDEDOR só pode atualizar usuários com perfil CLIENTE");
+        }
 
         usuario.setNome(request.getNome());
         if (request.getNomeSocial() != null) {
@@ -99,6 +118,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         }
 
         if (request.getPerfis() != null && !request.getPerfis().isEmpty()) {
+            validarHierarquiaPerfis(request.getPerfis(), authentication);
             usuario.setPerfis(request.getPerfis());
         }
 
@@ -112,17 +132,57 @@ public class UsuarioServiceImpl implements UsuarioService {
         return repositorio.save(usuario);
     }
 
+    private void validarHierarquiaPerfis(Set<PerfilUsuario> perfisSolicitados, Authentication authentication) {
+        if (perfisSolicitados == null || perfisSolicitados.isEmpty()) return;
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin) return;
+
+        boolean isGerente = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_GERENTE"));
+        if (isGerente) {
+            if (perfisSolicitados.contains(PerfilUsuario.ROLE_ADMIN)) {
+                throw new AccessDeniedException("GERENTE não pode atribuir ROLE_ADMIN");
+            }
+            return;
+        }
+
+        // VENDEDOR só pode atribuir CLIENTE
+        Set<PerfilUsuario> permitidos = Set.of(PerfilUsuario.ROLE_CLIENTE);
+        if (!permitidos.containsAll(perfisSolicitados)) {
+            throw new AccessDeniedException("VENDEDOR só pode atribuir ROLE_CLIENTE");
+        }
+    }
+
     @Override
     @Transactional
-    public void remover(Long id) {
-        buscarPorId(id);
+    public void remover(Long id, Authentication authentication) {
+        Usuario alvo = buscarPorId(id);
+        boolean solicitanteEhAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!solicitanteEhAdmin) {
+            boolean alvoEhAdminOuGerente = alvo.getPerfis().contains(PerfilUsuario.ROLE_ADMIN)
+                    || alvo.getPerfis().contains(PerfilUsuario.ROLE_GERENTE);
+            if (alvoEhAdminOuGerente) {
+                throw new AccessDeniedException("Sem permissão para remover este usuário");
+            }
+        }
         if (repositorioVenda.existsByClienteId(id) || repositorioVenda.existsByFuncionarioId(id)) {
             throw new UsuarioComVendasException(id);
         }
-        repositorio.deleteById(id);
+        alvo.getTelefones().clear();
+        alvo.getEmails().clear();
+        alvo.getDocumentos().clear();
+        alvo.getCredenciais().clear();
+        alvo.setEndereco(null);
+        alvo.setEmpresa(null);
+        repositorio.save(alvo);
+        repositorio.delete(alvo);
     }
 
-    // ─── Associações: telefones ───────────────────────────────────────────────
+    //  Associações: telefones 
 
     @Override
     @Transactional
@@ -156,7 +216,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         repositorio.save(usuario);
     }
 
-    // ─── Associações: emails ──────────────────────────────────────────────────
+    //  Associações: emails 
 
     @Override
     @Transactional
@@ -193,7 +253,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         repositorio.save(usuario);
     }
 
-    // ─── Associações: documentos ──────────────────────────────────────────────
+    //  Associações: documentos 
 
     @Override
     @Transactional
@@ -230,7 +290,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         repositorio.save(usuario);
     }
 
-    // ─── Associações: credenciais ─────────────────────────────────────────────
+    //  Associações: credenciais 
 
     @Override
     @Transactional
@@ -267,7 +327,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         repositorio.save(usuario);
     }
 
-    // ─── Associações: veículos ────────────────────────────────────────────────
+    //  Associações: veículos 
 
     @Override
     @Transactional(readOnly = true)
@@ -317,7 +377,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         repositorioVeiculo.save(veiculo);
     }
 
-    // ─── Empresa ──────────────────────────────────────────────────────────────
+    //  Empresa
 
     @Override
     @Transactional
@@ -325,5 +385,127 @@ public class UsuarioServiceImpl implements UsuarioService {
         Usuario usuario = buscarPorId(usuarioId);
         usuario.setEmpresa(null);
         repositorio.save(usuario);
+    }
+
+    //  Endereço
+
+    @Override
+    @Transactional(readOnly = true)
+    public Endereco buscarEndereco(Long usuarioId) {
+        Usuario usuario = buscarPorId(usuarioId);
+        if (usuario.getEndereco() == null) {
+            throw new ResourceNotFoundException("Usuário " + usuarioId + " não possui endereço cadastrado");
+        }
+        return usuario.getEndereco();
+    }
+
+    // Cria novo endereço e o associa ao usuário.
+    // Se o usuário já tinha endereço, o endereço anterior é desvinculado (não deletado).
+    @Override
+    @Transactional
+    public Endereco definirEndereco(Long usuarioId, EnderecoRequest request) {
+        Usuario usuario = buscarPorId(usuarioId);
+        Endereco novo = EnderecoMapper.toEntity(request);
+        Endereco salvo = repositorioEndereco.save(novo);
+        usuario.setEndereco(salvo);
+        repositorio.save(usuario);
+        return salvo;
+    }
+
+    @Override
+    @Transactional
+    public void removerEndereco(Long usuarioId) {
+        Usuario usuario = buscarPorId(usuarioId);
+        if (usuario.getEndereco() == null) {
+            throw new ResourceNotFoundException("Usuário " + usuarioId + " não possui endereço cadastrado");
+        }
+        usuario.setEndereco(null);
+        repositorio.save(usuario);
+    }
+
+    //  Vendas do usuário
+
+    // Retorna vendas onde o usuário é cliente OU funcionário.
+    // CLIENTE só vê as próprias; ADMIN/GERENTE/VENDEDOR vê as do usuário alvo.
+    @Override
+    @Transactional(readOnly = true)
+    public List<Venda> listarVendas(Long usuarioId, Authentication authentication) {
+        buscarPorId(usuarioId);
+        boolean isCliente = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_CLIENTE"));
+        if (isCliente) {
+            // CLIENTE só pode ver as próprias vendas
+            Usuario autenticado = repositorio.findByCredencialNomeUsuario(authentication.getName())
+                    .or(() -> {
+                        if (authentication.getName().startsWith("CB:")) {
+                            long cod = Long.parseLong(authentication.getName().substring(3));
+                            return repositorio.findByCredencialCodigoBarra(cod);
+                        }
+                        return java.util.Optional.empty();
+                    })
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuário autenticado não encontrado"));
+            if (!autenticado.getId().equals(usuarioId)) {
+                throw new org.springframework.security.access.AccessDeniedException(
+                        "CLIENTE só pode visualizar as próprias vendas");
+            }
+        }
+        List<Venda> vendas = repositorioVenda.findByUsuarioIdComItens(usuarioId);
+        vendas.forEach(v -> v.getServicos().size());
+        return vendas;
+    }
+
+    // Associa uma venda existente ao usuário como cliente ou funcionário.
+    // Apenas ADMIN e GERENTE podem fazer essa operação.
+    @Override
+    @Transactional
+    public Venda associarVenda(Long usuarioId, Long vendaId, Authentication authentication) {
+        buscarPorId(usuarioId);
+        Venda venda = repositorioVenda.findByIdComItens(vendaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Venda " + vendaId + " não encontrada"));
+        venda.getServicos().size();
+
+        boolean jaAssociado = usuarioId.equals(venda.getClienteId())
+                || usuarioId.equals(venda.getFuncionarioId());
+        if (jaAssociado) {
+            throw new RecursoJaVinculadoException("Usuário " + usuarioId + " já está associado à venda " + vendaId);
+        }
+
+        // Associa como cliente se a venda ainda não tiver cliente; senão como funcionário
+        if (venda.getClienteId() == null) {
+            Usuario usuario = buscarPorId(usuarioId);
+            venda.setClienteId(usuarioId);
+            venda.setClienteNomeSnapshot(usuario.getNome());
+        } else if (venda.getFuncionarioId() == null) {
+            Usuario usuario = buscarPorId(usuarioId);
+            venda.setFuncionarioId(usuarioId);
+            venda.setFuncionarioNomeSnapshot(usuario.getNome());
+        } else {
+            throw new RecursoJaVinculadoException("Venda " + vendaId + " já possui cliente e funcionário");
+        }
+
+        return repositorioVenda.save(venda);
+    }
+
+    // Remove a associação do usuário à venda (zera clienteId ou funcionarioId).
+    @Override
+    @Transactional
+    public void desassociarVenda(Long usuarioId, Long vendaId, Authentication authentication) {
+        buscarPorId(usuarioId);
+        Venda venda = repositorioVenda.findByIdComItens(vendaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Venda " + vendaId + " não encontrada"));
+        venda.getServicos().size();
+
+        if (usuarioId.equals(venda.getClienteId())) {
+            venda.setClienteId(null);
+            venda.setClienteNomeSnapshot(null);
+        } else if (usuarioId.equals(venda.getFuncionarioId())) {
+            venda.setFuncionarioId(null);
+            venda.setFuncionarioNomeSnapshot(null);
+        } else {
+            throw new ResourceNotFoundException(
+                    "Usuário " + usuarioId + " não está associado à venda " + vendaId);
+        }
+
+        repositorioVenda.save(venda);
     }
 }

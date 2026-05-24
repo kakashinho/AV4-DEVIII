@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,37 +28,39 @@ public class VendaController {
     @Autowired private VendaAssembler vendaAssembler;
 
     @PostMapping
-    public ResponseEntity<VendaResponse> criarVenda(@Valid @RequestBody VendaRequest request) {
-        Venda salva = vendaService.criarVenda(request);
+    public ResponseEntity<VendaResponse> criarVenda(
+            @Valid @RequestBody VendaRequest request, Authentication authentication) {
+        Venda salva = vendaService.criarVenda(request, authentication);
         VendaResponse response = vendaAssembler.toModel(vendaMapper.toResponse(salva));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     // @Transactional removido: itens carregados via JOIN FETCH no serviço (findAllComItens)
     @GetMapping
-    public ResponseEntity<CollectionModel<VendaResponse>> listarVendas() {
-        List<VendaResponse> responses = vendaService.listarVendas().stream()
+    public ResponseEntity<CollectionModel<VendaResponse>> listarVendas(Authentication authentication) {
+        List<VendaResponse> responses = vendaService.listarVendas(authentication).stream()
                 .map(vendaMapper::toResponse)
                 .map(vendaAssembler::toModel)
                 .collect(Collectors.toList());
         CollectionModel<VendaResponse> collection = CollectionModel.of(responses);
-        collection.add(linkTo(methodOn(VendaController.class).listarVendas()).withSelfRel());
-        collection.add(linkTo(methodOn(VendaController.class).criarVenda(null)).withRel("criar"));
+        collection.add(linkTo(methodOn(VendaController.class).listarVendas(null)).withSelfRel());
+        collection.add(linkTo(methodOn(VendaController.class).criarVenda(null, null)).withRel("criar"));
         return ResponseEntity.ok(collection);
     }
 
     // @Transactional removido: itens carregados via JOIN FETCH no serviço (findByIdComItens)
     @GetMapping("/{id}")
-    public ResponseEntity<VendaResponse> obterVenda(@PathVariable Long id) {
-        Venda venda = vendaService.obterVenda(id);
+    public ResponseEntity<VendaResponse> obterVenda(@PathVariable Long id, Authentication authentication) {
+        Venda venda = vendaService.obterVenda(id, authentication);
         VendaResponse response = vendaAssembler.toModel(vendaMapper.toResponse(venda));
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<VendaResponse> atualizarVenda(
-            @PathVariable Long id, @Valid @RequestBody VendaRequest request) {
-        Venda venda = vendaService.atualizarVenda(id, request);
+            @PathVariable Long id, @Valid @RequestBody VendaRequest request,
+            Authentication authentication) {
+        Venda venda = vendaService.atualizarVenda(id, request, authentication);
         VendaResponse response = vendaAssembler.toModel(vendaMapper.toResponse(venda));
         return ResponseEntity.ok(response);
     }

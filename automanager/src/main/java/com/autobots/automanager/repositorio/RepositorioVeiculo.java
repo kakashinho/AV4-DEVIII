@@ -19,4 +19,8 @@ public interface RepositorioVeiculo extends JpaRepository<Veiculo, Long> {
 
     @Query("SELECT v FROM Veiculo v LEFT JOIN FETCH v.proprietario WHERE v.proprietario.id = :proprietarioId")
     List<Veiculo> findByProprietarioId(@Param("proprietarioId") Long proprietarioId);
+
+    boolean existsByPlaca(String placa);
+
+    boolean existsByPlacaAndIdNot(String placa, Long id);
 }

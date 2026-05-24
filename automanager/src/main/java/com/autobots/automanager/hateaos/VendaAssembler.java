@@ -15,17 +15,21 @@ public class VendaAssembler implements RepresentationModelAssembler<VendaRespons
     @Override
     public VendaResponse toModel(VendaResponse response) {
         response.add(linkTo(methodOn(VendaController.class)
-                .obterVenda(response.getId())).withSelfRel());
+                .obterVenda(response.getId(), null)).withSelfRel());
         response.add(linkTo(methodOn(VendaController.class)
-                .listarVendas()).withRel("vendas"));
+                .listarVendas(null)).withRel("vendas"));
         response.add(linkTo(methodOn(VendaController.class)
-                .atualizarVenda(response.getId(), null)).withRel("atualizar"));
+                .atualizarVenda(response.getId(), null, null)).withRel("atualizar"));
         response.add(linkTo(methodOn(VendaController.class)
                 .excluirVenda(response.getId())).withRel("excluir"));
 
         if (response.getClienteId() != null) {
             response.add(linkTo(methodOn(UsuarioController.class)
-                    .buscar(response.getClienteId())).withRel("cliente"));
+                    .buscar(response.getClienteId(), null)).withRel("cliente"));
+        }
+        if (response.getFuncionarioId() != null) {
+            response.add(linkTo(methodOn(UsuarioController.class)
+                    .buscar(response.getFuncionarioId(), null)).withRel("funcionario"));
         }
         if (response.getVeiculoId() != null) {
             response.add(linkTo(methodOn(VeiculoController.class)

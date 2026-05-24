@@ -27,7 +27,7 @@ public class Veiculo {
     private TipoVeiculo tipo;
     @Column(nullable = false)
     private String modelo;
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String placa;
     @ManyToOne(fetch = FetchType.LAZY)
     private Usuario proprietario;

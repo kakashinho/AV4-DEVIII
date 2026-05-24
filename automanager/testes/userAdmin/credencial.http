@@ -1,44 +1,59 @@
 @baseUrl = http://localhost:8080/api
 
+### Login ADMIN
+# @name loginAdmin
+POST  http://localhost:8080/auth/login
+Content-Type: application/json
+
+{ "nomeUsuario": "admin", "senha": "123456" }
+
 # CREDENCIAIS
 
+###
 # LISTAR CREDENCIAIS OK
 GET {{baseUrl}}/credenciais
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR CREDENCIAL EXISTENTE OK
 GET {{baseUrl}}/credenciais/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR CREDENCIAL INEXISTENTE OK
 GET {{baseUrl}}/credenciais/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR CREDENCIAL COM ID INVALIDO
 GET {{baseUrl}}/credenciais/abc
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR CREDENCIAL COM ID NEGATIVO
 GET {{baseUrl}}/credenciais/-1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR CREDENCIAL COM ID ZERO
 GET {{baseUrl}}/credenciais/0
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # CRIAR CREDENCIAL VALIDA
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
-  "nomeUsuario": "admin",
+  "nomeUsuario": "superAdmin",
   "senha": "123456"
 }
 
@@ -47,6 +62,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL INATIVA
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": true,
@@ -55,9 +71,10 @@ Content-Type: application/json
 
 ###
 
-# CRIAR CREDENCIAL SEM INATIVO Não sei
+# CRIAR CREDENCIAL SEM INATIVO
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nomeUsuario": "admin1",
@@ -66,9 +83,10 @@ Content-Type: application/json
 
 ###
 
-# CRIAR CREDENCIAL COM INATIVO NULO Não sei
+# CRIAR CREDENCIAL COM INATIVO NULO
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": null,
@@ -81,6 +99,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM NOME USUARIO NULO
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -93,6 +112,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM SENHA NULA
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -105,6 +125,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM CODIGO NULO OK
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -116,6 +137,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM NOME USUARIO VAZIO
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -128,6 +150,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM SENHA VAZIA
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -140,6 +163,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM NOME USUARIO EM BRANCO
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -152,6 +176,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM SENHA EM BRANCO
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -165,6 +190,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM CODIGO NEGATIVO
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -178,6 +204,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM CODIGO ZERO
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -191,6 +218,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM BODY VAZIO
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {}
 
@@ -199,6 +227,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM JSON INVALIDO
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -212,6 +241,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM CONTENT TYPE INVALIDO
 POST {{baseUrl}}/credenciais
 Content-Type: text/plain
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -225,6 +255,7 @@ Content-Type: text/plain
 # CRIAR CREDENCIAL COM CAMPOS EXTRAS
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -239,6 +270,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM NOME USUARIO MUITO GRANDE
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -252,6 +284,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM SENHA MUITO GRANDE
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -265,6 +298,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM SQL INJECTION
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -278,6 +312,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM XSS
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -291,6 +326,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM CODIGO STRING
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false,
@@ -304,6 +340,7 @@ Content-Type: application/json
 # CRIAR CREDENCIAL COM INATIVO STRING
 POST {{baseUrl}}/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": "false",
@@ -317,6 +354,7 @@ Content-Type: application/json
 # ATUALIZAR CREDENCIAL VALIDA OK
 PUT {{baseUrl}}/credenciais/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": true
@@ -327,6 +365,7 @@ Content-Type: application/json
 # ATUALIZAR CREDENCIAL PARA ATIVA OK
 PUT {{baseUrl}}/credenciais/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": false
@@ -337,6 +376,7 @@ Content-Type: application/json
 # ATUALIZAR CREDENCIAL INEXISTENTE OK
 PUT {{baseUrl}}/credenciais/999999
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": true
@@ -347,6 +387,7 @@ Content-Type: application/json
 # ATUALIZAR CREDENCIAL COM ID INVALIDO
 PUT {{baseUrl}}/credenciais/abc
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": true
@@ -357,6 +398,7 @@ Content-Type: application/json
 # ATUALIZAR CREDENCIAL COM ID NEGATIVO
 PUT {{baseUrl}}/credenciais/-1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": true
@@ -367,6 +409,7 @@ Content-Type: application/json
 # ATUALIZAR CREDENCIAL COM ID ZERO
 PUT {{baseUrl}}/credenciais/0
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": true
@@ -377,6 +420,7 @@ Content-Type: application/json
 # ATUALIZAR CREDENCIAL SEM INATIVO
 PUT {{baseUrl}}/credenciais/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {}
 
@@ -385,6 +429,7 @@ Content-Type: application/json
 # ATUALIZAR CREDENCIAL COM INATIVO NULO
 PUT {{baseUrl}}/credenciais/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": null
@@ -395,6 +440,7 @@ Content-Type: application/json
 # ATUALIZAR CREDENCIAL COM INATIVO STRING OK
 PUT {{baseUrl}}/credenciais/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": "false"
@@ -405,6 +451,7 @@ Content-Type: application/json
 # ATUALIZAR CREDENCIAL COM JSON INVALIDO 
 PUT {{baseUrl}}/credenciais/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": true,
@@ -415,6 +462,7 @@ Content-Type: application/json
 # ATUALIZAR CREDENCIAL COM CONTENT TYPE INVALIDO
 PUT {{baseUrl}}/credenciais/1
 Content-Type: text/plain
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "inativo": true
@@ -424,20 +472,24 @@ Content-Type: text/plain
 
 # REMOVER CREDENCIAL EXISTENTE
 DELETE {{baseUrl}}/credenciais/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # REMOVER CREDENCIAL INEXISTENTE
 DELETE {{baseUrl}}/credenciais/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # REMOVER CREDENCIAL COM ID INVALIDO
 DELETE {{baseUrl}}/credenciais/abc
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # REMOVER CREDENCIAL COM ID NEGATIVO
 DELETE {{baseUrl}}/credenciais/-1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###

@@ -1,8 +1,18 @@
 @baseUrl = http://localhost:8080/api
 
+
+### Login ADMIN
+# @name loginAdmin
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{ "nomeUsuario": "admin", "senha": "123456" }
+
+###
 # ASSOCIAR CREDENCIAL VALIDA
 POST {{baseUrl}}/usuarios/1/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "credencialId": 1
@@ -13,6 +23,7 @@ Content-Type: application/json
 # ASSOCIAR CREDENCIAL INEXISTENTE
 POST {{baseUrl}}/usuarios/1/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "credencialId": 999999
@@ -23,6 +34,7 @@ Content-Type: application/json
 # ASSOCIAR CREDENCIAL COM USUARIO INEXISTENTE
 POST {{baseUrl}}/usuarios/999999/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "credencialId": 1
@@ -33,6 +45,7 @@ Content-Type: application/json
 # ASSOCIAR CREDENCIAL COM ID NULO
 POST {{baseUrl}}/usuarios/1/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "credencialId": null
@@ -43,6 +56,7 @@ Content-Type: application/json
 # ASSOCIAR CREDENCIAL SEM ID
 POST {{baseUrl}}/usuarios/1/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {}
 
@@ -51,6 +65,7 @@ Content-Type: application/json
 # ASSOCIAR CREDENCIAL COM JSON INVALIDO
 POST {{baseUrl}}/usuarios/1/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "credencialId": 1,
@@ -61,6 +76,7 @@ Content-Type: application/json
 # ASSOCIAR CREDENCIAL COM CONTENT TYPE INVALIDO
 POST {{baseUrl}}/usuarios/1/credenciais
 Content-Type: text/plain
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "credencialId": 1
@@ -71,6 +87,7 @@ Content-Type: text/plain
 # ASSOCIAR CREDENCIAL COM ID STRING
 POST {{baseUrl}}/usuarios/1/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "credencialId": "abc"
@@ -81,35 +98,42 @@ Content-Type: application/json
 # ASSOCIAR CREDENCIAL COM ID NEGATIVO
 POST {{baseUrl}}/usuarios/1/credenciais
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "credencialId": -1
 }
 
 ###
-GET {{baseUrl}}/usuarios/1
+GET {{baseUrl}}/usuarios/2
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DESASSOCIAR CREDENCIAL VALIDA
-DELETE {{baseUrl}}/usuarios/2/credenciais/1
+DELETE {{baseUrl}}/usuarios/2/credenciais/2
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DESASSOCIAR CREDENCIAL INEXISTENTE
 DELETE {{baseUrl}}/usuarios/1/credenciais/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DESASSOCIAR CREDENCIAL DE USUARIO INEXISTENTE
 DELETE {{baseUrl}}/usuarios/999999/credenciais/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DESASSOCIAR CREDENCIAL COM ID INVALIDO
 DELETE {{baseUrl}}/usuarios/1/credenciais/abc
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DESASSOCIAR CREDENCIAL COM USUARIO INVALIDO
 DELETE {{baseUrl}}/usuarios/abc/credenciais/1
+Authorization: Bearer {{loginAdmin.response.body.token}}

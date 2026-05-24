@@ -24,7 +24,7 @@ public class VeiculoAssembler implements RepresentationModelAssembler<VeiculoRes
 
         if (response.getProprietarioId() != null) {
             response.add(linkTo(methodOn(UsuarioController.class)
-                    .buscar(response.getProprietarioId())).withRel("proprietario"));
+                    .buscar(response.getProprietarioId(), null)).withRel("proprietario"));
             response.add(linkTo(methodOn(UsuarioController.class)
                     .desassociarVeiculo(response.getProprietarioId(), response.getId()))
                     .withRel("delete:remover-associacao"));

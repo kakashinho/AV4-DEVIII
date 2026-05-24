@@ -1,40 +1,55 @@
 @baseUrl = http://localhost:8080/api
 
-# TELEFONES
+### Login ADMIN
+# @name loginAdmin
+POST http://localhost:8080/auth/login
+Content-Type: application/json
 
+{ "nomeUsuario": "admin", "senha": "123456" }
+
+
+# TELEFONES
+###
 # LISTAR TELEFONES OK
 GET {{baseUrl}}/telefones
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR TELEFONE EXISTENTE OK
 GET {{baseUrl}}/telefones/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR TELEFONE INEXISTENTE OK
 GET {{baseUrl}}/telefones/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR TELEFONE COM ID INVALIDO
 GET {{baseUrl}}/telefones/abc
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR TELEFONE COM ID NEGATIVO
 GET {{baseUrl}}/telefones/-1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR TELEFONE COM ID ZERO
 GET {{baseUrl}}/telefones/0
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # CRIAR TELEFONE VALIDO OK
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "12",
@@ -46,6 +61,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM DDD VAZIO OK
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "",
@@ -57,6 +73,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM NUMERO VAZIO OK
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "12",
@@ -68,6 +85,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM DDD NULO OK
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": null,
@@ -79,6 +97,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM NUMERO NULO OK
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "12",
@@ -90,6 +109,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM DDD EM BRANCO OK
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "   ",
@@ -101,6 +121,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM NUMERO EM BRANCO OK
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "12",
@@ -112,6 +133,7 @@ Content-Type: application/json
 # CRIAR TELEFONE SEM DDD OK
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "numero": "999999999"
@@ -122,6 +144,7 @@ Content-Type: application/json
 # CRIAR TELEFONE SEM NUMERO OK
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "12"
@@ -132,6 +155,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM BODY VAZIO OK
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {}
 
@@ -140,6 +164,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM JSON INVALIDO
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "12",
@@ -151,6 +176,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM CONTENT TYPE INVALIDO
 POST {{baseUrl}}/telefones
 Content-Type: text/plain
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "12",
@@ -162,6 +188,7 @@ Content-Type: text/plain
 # CRIAR TELEFONE COM DDD NUMERICO OK
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": 12,
@@ -173,6 +200,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM NUMERO NUMERICO OK
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "12",
@@ -184,6 +212,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM CAMPOS EXTRAS OK
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "12",
@@ -196,6 +225,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM DDD MUITO GRANDE
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "123456789",
@@ -207,6 +237,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM NUMERO MUITO GRANDE
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "12",
@@ -218,6 +249,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM CARACTERES ESPECIAIS
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "@#",
@@ -229,6 +261,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM LETRAS
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "ab",
@@ -240,6 +273,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM SQL INJECTION
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "12",
@@ -251,6 +285,7 @@ Content-Type: application/json
 # CRIAR TELEFONE COM XSS
 POST {{baseUrl}}/telefones
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "12",
@@ -262,6 +297,7 @@ Content-Type: application/json
 # ATUALIZAR TELEFONE VALIDO OK
 PUT {{baseUrl}}/telefones/2
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "11",
@@ -273,6 +309,7 @@ Content-Type: application/json
 # ATUALIZAR TELEFONE INEXISTENTE OK
 PUT {{baseUrl}}/telefones/999999
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "11",
@@ -284,6 +321,7 @@ Content-Type: application/json
 # ATUALIZAR TELEFONE COM ID INVALIDO
 PUT {{baseUrl}}/telefones/abc
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "11",
@@ -295,6 +333,7 @@ Content-Type: application/json
 # ATUALIZAR TELEFONE COM BODY VAZIO
 PUT {{baseUrl}}/telefones/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {}
 
@@ -303,6 +342,7 @@ Content-Type: application/json
 # ATUALIZAR TELEFONE COM DDD NULO
 PUT {{baseUrl}}/telefones/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": null,
@@ -314,6 +354,7 @@ Content-Type: application/json
 # ATUALIZAR TELEFONE COM NUMERO NULO
 PUT {{baseUrl}}/telefones/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "11",
@@ -325,6 +366,7 @@ Content-Type: application/json
 # ATUALIZAR TELEFONE COM JSON INVALIDO
 PUT {{baseUrl}}/telefones/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "ddd": "11",
@@ -335,20 +377,24 @@ Content-Type: application/json
 
 # REMOVER TELEFONE EXISTENTE
 DELETE {{baseUrl}}/telefones/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # REMOVER TELEFONE INEXISTENTE
 DELETE {{baseUrl}}/telefones/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # REMOVER TELEFONE COM ID INVALIDO
 DELETE {{baseUrl}}/telefones/abc
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # REMOVER TELEFONE COM ID NEGATIVO
 DELETE {{baseUrl}}/telefones/-1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###

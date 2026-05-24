@@ -1,0 +1,456 @@
+@baseUrl = http://localhost:8080/api
+
+### Login ADMIN
+# @name loginAdmin
+POST  http://localhost:8080/auth/login
+Content-Type: application/json
+
+{ "nomeUsuario": "admin", "senha": "123456" }
+
+# ENDERECOS
+
+###
+# LISTAR ENDERECOS OK
+GET {{baseUrl}}/enderecos
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+###
+
+# BUSCAR ENDERECO EXISTENTE OK
+GET {{baseUrl}}/enderecos/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+###
+
+# BUSCAR ENDERECO INEXISTENTE OK
+GET {{baseUrl}}/enderecos/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+###
+
+# BUSCAR ENDERECO COM ID INVALIDO
+GET {{baseUrl}}/enderecos/abc
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+###
+
+# BUSCAR ENDERECO COM ID NEGATIVO
+GET {{baseUrl}}/enderecos/-1
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+###
+
+# BUSCAR ENDERECO COM ID ZERO
+GET {{baseUrl}}/enderecos/0
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+###
+
+# CRIAR ENDERECO VALIDO OK
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "SP",
+  "cidade": "São José dos Campos",
+  "bairro": "Centro",
+  "rua": "Rua das Flores",
+  "numero": "123",
+  "codigoPostal": "12210000",
+  "informacoesAdicionais": "Apartamento 12"
+}
+
+###
+
+# CRIAR ENDERECO SEM INFORMACOES ADICIONAIS OK
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "RJ",
+  "cidade": "Rio de Janeiro",
+  "bairro": "Copacabana",
+  "rua": "Avenida Atlântica",
+  "numero": "500",
+  "codigoPostal": "22010000"
+}
+
+###
+
+# CRIAR ENDERECO COM ESTADO VAZIO OK
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "",
+  "cidade": "São Paulo",
+  "bairro": "Centro",
+  "rua": "Rua A",
+  "numero": "10",
+  "codigoPostal": "01000000"
+}
+
+###
+
+# CRIAR ENDERECO COM CIDADE VAZIA OK
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "SP",
+  "cidade": "",
+  "bairro": "Centro",
+  "rua": "Rua A",
+  "numero": "10",
+  "codigoPostal": "01000000"
+}
+
+###
+
+# CRIAR ENDERECO COM BAIRRO VAZIO OK
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "SP",
+  "cidade": "São Paulo",
+  "bairro": "",
+  "rua": "Rua A",
+  "numero": "10",
+  "codigoPostal": "01000000"
+}
+
+###
+
+# CRIAR ENDERECO COM RUA VAZIA OK
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "SP",
+  "cidade": "São Paulo",
+  "bairro": "Centro",
+  "rua": "",
+  "numero": "10",
+  "codigoPostal": "01000000"
+}
+
+###
+
+# CRIAR ENDERECO COM NUMERO VAZIO OK
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "SP",
+  "cidade": "São Paulo",
+  "bairro": "Centro",
+  "rua": "Rua A",
+  "numero": "",
+  "codigoPostal": "01000000"
+}
+
+###
+
+# CRIAR ENDERECO COM CODIGO POSTAL VAZIO OK
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "SP",
+  "cidade": "São Paulo",
+  "bairro": "Centro",
+  "rua": "Rua A",
+  "numero": "10",
+  "codigoPostal": ""
+}
+
+###
+
+# CRIAR ENDERECO COM CAMPOS NULOS OK
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": null,
+  "cidade": null,
+  "bairro": null,
+  "rua": null,
+  "numero": null,
+  "codigoPostal": null
+}
+
+###
+
+# CRIAR ENDERECO COM CAMPOS EM BRANCO OK
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "   ",
+  "cidade": "   ",
+  "bairro": "   ",
+  "rua": "   ",
+  "numero": "   ",
+  "codigoPostal": "   "
+}
+
+###
+
+# CRIAR ENDERECO SEM ESTADO OK
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "cidade": "São Paulo",
+  "bairro": "Centro",
+  "rua": "Rua A",
+  "numero": "10",
+  "codigoPostal": "01000000"
+}
+
+###
+
+# CRIAR ENDERECO SEM CIDADE OK
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "SP",
+  "bairro": "Centro",
+  "rua": "Rua A",
+  "numero": "10",
+  "codigoPostal": "01000000"
+}
+
+###
+
+# CRIAR ENDERECO COM BODY VAZIO OK
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{}
+
+###
+
+# CRIAR ENDERECO COM JSON INVALIDO
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "SP",
+  "cidade": "São Paulo",
+  "bairro": "Centro",
+  "rua": "Rua A",
+  "numero": "10",
+  "codigoPostal": "01000000",
+}
+
+###
+
+# CRIAR ENDERECO COM CONTENT TYPE INVALIDO
+POST {{baseUrl}}/enderecos
+Content-Type: text/plain
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "SP",
+  "cidade": "São Paulo",
+  "bairro": "Centro",
+  "rua": "Rua A",
+  "numero": "10",
+  "codigoPostal": "01000000"
+}
+
+###
+
+# CRIAR ENDERECO COM CAMPOS NUMERICOS OK
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": 123,
+  "cidade": 456,
+  "bairro": 789,
+  "rua": 1011,
+  "numero": 12,
+  "codigoPostal": 12210000
+}
+
+###
+
+# CRIAR ENDERECO COM CAMPOS EXTRAS OK
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "SP",
+  "cidade": "São Paulo",
+  "bairro": "Centro",
+  "rua": "Rua A",
+  "numero": "10",
+  "codigoPostal": "01000000",
+  "extra": "campo-extra"
+}
+
+###
+
+# CRIAR ENDERECO COM SQL INJECTION
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "' OR '1'='1",
+  "cidade": "São Paulo",
+  "bairro": "Centro",
+  "rua": "Rua A",
+  "numero": "10",
+  "codigoPostal": "01000000"
+}
+
+###
+
+# CRIAR ENDERECO COM XSS
+POST {{baseUrl}}/enderecos
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "<script>alert('xss')</script>",
+  "cidade": "São Paulo",
+  "bairro": "Centro",
+  "rua": "Rua A",
+  "numero": "10",
+  "codigoPostal": "01000000"
+}
+
+###
+
+# ATUALIZAR ENDERECO VALIDO OK
+PUT {{baseUrl}}/enderecos/1
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "MG",
+  "cidade": "Belo Horizonte",
+  "bairro": "Savassi",
+  "rua": "Rua Atualizada",
+  "numero": "999",
+  "codigoPostal": "30140071",
+  "informacoesAdicionais": "Casa"
+}
+
+###
+
+# ATUALIZAR ENDERECO INEXISTENTE OK
+PUT {{baseUrl}}/enderecos/999999
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "MG",
+  "cidade": "Belo Horizonte",
+  "bairro": "Savassi",
+  "rua": "Rua Atualizada",
+  "numero": "999",
+  "codigoPostal": "30140071"
+}
+
+###
+
+# ATUALIZAR ENDERECO COM ID INVALIDO
+PUT {{baseUrl}}/enderecos/abc
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "MG",
+  "cidade": "Belo Horizonte",
+  "bairro": "Savassi",
+  "rua": "Rua Atualizada",
+  "numero": "999",
+  "codigoPostal": "30140071"
+}
+
+###
+
+# ATUALIZAR ENDERECO COM BODY VAZIO
+PUT {{baseUrl}}/enderecos/1
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{}
+
+###
+
+# ATUALIZAR ENDERECO COM CAMPOS NULOS
+PUT {{baseUrl}}/enderecos/1
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": null,
+  "cidade": null,
+  "bairro": null,
+  "rua": null,
+  "numero": null,
+  "codigoPostal": null
+}
+
+###
+
+# ATUALIZAR ENDERECO COM JSON INVALIDO
+PUT {{baseUrl}}/enderecos/1
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{
+  "estado": "SP",
+  "cidade": "São Paulo",
+  "bairro": "Centro",
+  "rua": "Rua A",
+  "numero": "10",
+  "codigoPostal": "01000000",
+}
+
+###
+
+# REMOVER ENDERECO EXISTENTE
+DELETE {{baseUrl}}/enderecos/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+###
+
+# REMOVER ENDERECO INEXISTENTE
+DELETE {{baseUrl}}/enderecos/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+###
+
+# REMOVER ENDERECO COM ID INVALIDO
+DELETE {{baseUrl}}/enderecos/abc
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+###
+
+# REMOVER ENDERECO COM ID NEGATIVO
+DELETE {{baseUrl}}/enderecos/-1
+Authorization: Bearer {{loginAdmin.response.body.token}}

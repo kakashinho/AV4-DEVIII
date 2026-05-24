@@ -12,6 +12,7 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -33,14 +34,14 @@ public class ManipuladorGlobalExcecoes {
 
     private static final Logger log = LoggerFactory.getLogger(ManipuladorGlobalExcecoes.class);
 
-    // ─── 400 — PathVariable não conversível (ex: /telefones/abc) ────────────
+    //  400 — PathVariable não conversível (ex: /telefones/abc) 
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ResponsePadrao<Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         return construirResposta(HttpStatus.BAD_REQUEST, "O ID informado é inválido.");
     }
 
-    // ─── 400 — body ausente, JSON malformado ou valor de tipo inválido ───────
+    //  400 — body ausente, JSON malformado ou valor de tipo inválido 
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ResponsePadrao<Object>> handleNotReadable(HttpMessageNotReadableException ex) {
@@ -66,7 +67,15 @@ public class ManipuladorGlobalExcecoes {
         return construirResposta(HttpStatus.BAD_REQUEST, "JSON inválido ou mal formatado.");
     }
 
-    // ─── 405 — Método HTTP não suportado para a rota ─────────────────────────
+    //  404 — rota não encontrada (Spring 6: NoResourceFoundException)
+
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ResponsePadrao<Object>> handleNoResourceFound(
+            org.springframework.web.servlet.resource.NoResourceFoundException ex) {
+        return construirResposta(HttpStatus.NOT_FOUND, "Recurso não encontrado: " + ex.getResourcePath());
+    }
+
+    //  405 — Método HTTP não suportado para a rota
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ResponsePadrao<Object>> handleMethodNotSupported(
@@ -75,14 +84,14 @@ public class ManipuladorGlobalExcecoes {
                 "Método HTTP '" + ex.getMethod() + "' não é suportado para este endpoint.");
     }
 
-    // ─── 415 — Content-Type inválido ─────────────────────────────────────────
+    //  415 — Content-Type inválido 
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<ResponsePadrao<Object>> handleMediaType(HttpMediaTypeNotSupportedException ex) {
         return construirResposta(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Content-Type deve ser application/json.");
     }
 
-    // ─── 400 — @Validated em PathVariable / @RequestParam ────────────────────
+    //  400 — @Validated em PathVariable / @RequestParam 
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ResponsePadrao<Object>> handleConstraintViolation(ConstraintViolationException ex) {
@@ -92,7 +101,7 @@ public class ManipuladorGlobalExcecoes {
         return construirResposta(HttpStatus.BAD_REQUEST, mensagem.isBlank() ? "Parâmetros inválidos." : mensagem);
     }
 
-    // ─── 400 — payload inválido ───────────────────────────────────────────────
+    //  400 — payload inválido 
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ResponsePadrao<Object>> handleValidacaoBean(MethodArgumentNotValidException ex) {
@@ -119,7 +128,7 @@ public class ManipuladorGlobalExcecoes {
         return construirResposta(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
-    // ─── 404 — recurso não encontrado ────────────────────────────────────────
+    //  404 — recurso não encontrado 
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ResponsePadrao<Object>> handleResourceNotFound(ResourceNotFoundException ex) {
@@ -171,7 +180,7 @@ public class ManipuladorGlobalExcecoes {
         return construirResposta(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-    // ─── 409 — conflito de unicidade ─────────────────────────────────────────
+    //  409 — conflito de unicidade 
 
     @ExceptionHandler(RecursoJaVinculadoException.class)
     public ResponseEntity<ResponsePadrao<Object>> handleRecursoJaVinculado(RecursoJaVinculadoException ex) {
@@ -205,6 +214,11 @@ public class ManipuladorGlobalExcecoes {
 
     @ExceptionHandler(TelefoneAssociadoException.class)
     public ResponseEntity<ResponsePadrao<Object>> handleTelefoneAssociado(TelefoneAssociadoException ex) {
+        return construirResposta(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(EnderecoAssociadoException.class)
+    public ResponseEntity<ResponsePadrao<Object>> handleEnderecoAssociado(EnderecoAssociadoException ex) {
         return construirResposta(HttpStatus.CONFLICT, ex.getMessage());
     }
 
@@ -258,7 +272,7 @@ public class ManipuladorGlobalExcecoes {
         return construirResposta(HttpStatus.CONFLICT, mensagem);
     }
 
-    // ─── 400 — regras de negócio específicas ─────────────────────────────────
+    //  400 — regras de negócio específicas 
 
     @ExceptionHandler(EstoqueNegativoException.class)
     public ResponseEntity<ResponsePadrao<Object>> handleEstoqueNegativo(EstoqueNegativoException ex) {
@@ -270,17 +284,14 @@ public class ManipuladorGlobalExcecoes {
         return construirResposta(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
-    // ─── 422 — regra de negócio da venda ─────────────────────────────────────
+    //  422 — regra de negócio da venda 
 
     @ExceptionHandler(VendaNaoValidaException.class)
     public ResponseEntity<ResponsePadrao<Object>> handleVendaNaoValida(VendaNaoValidaException ex) {
-        HttpStatus status = ex.getErros().isEmpty()
-                ? HttpStatus.UNPROCESSABLE_ENTITY
-                : HttpStatus.BAD_REQUEST;
-        return construirRespostaComErros(status, ex.getMessage(), ex.getErros());
+        return construirRespostaComErros(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), ex.getErros());
     }
 
-    // ─── 409 — conflito de escrita concorrente (otimistic locking) ──────────
+    //  409 — conflito de escrita concorrente (otimistic locking) 
 
     @ExceptionHandler(OptimisticLockingFailureException.class)
     public ResponseEntity<ResponsePadrao<Object>> handleOptimisticLock(OptimisticLockingFailureException ex) {
@@ -289,18 +300,31 @@ public class ManipuladorGlobalExcecoes {
                 "O registro foi modificado por outra operação simultânea. Tente novamente.");
     }
 
-    // ─── 422 — operação não suportada por regra de negócio ───────────────────
+    //  422 — operação não suportada por regra de negócio 
 
     @ExceptionHandler(UnsupportedOperationException.class)
     public ResponseEntity<ResponsePadrao<Object>> handleUnsupported(UnsupportedOperationException ex) {
         return construirResposta(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
     }
 
-    // ─── 401 — credenciais inválidas no login ────────────────────────────────
+    //  403 — acesso negado por hierarquia de perfis
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ResponsePadrao<Object>> handleAccessDenied(AccessDeniedException ex) {
+        return construirResposta(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
+    //  401 — credenciais inválidas no login
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ResponsePadrao<Object>> handleBadCredentials(BadCredentialsException ex) {
         return construirResposta(HttpStatus.UNAUTHORIZED, "Usuário ou senha inválidos.");
+    }
+
+    @ExceptionHandler(org.springframework.security.authentication.DisabledException.class)
+    public ResponseEntity<ResponsePadrao<Object>> handleDisabled(
+            org.springframework.security.authentication.DisabledException ex) {
+        return construirResposta(HttpStatus.UNAUTHORIZED, "Credencial inativa ou desabilitada.");
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -308,7 +332,7 @@ public class ManipuladorGlobalExcecoes {
         return construirResposta(HttpStatus.UNAUTHORIZED, "Falha na autenticação.");
     }
 
-    // ─── 500 — erro interno: log completo, resposta limpa ────────────────────
+    //  500 — erro interno: log completo, resposta limpa 
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResponsePadrao<Object>> handleGenerico(Exception ex) {
@@ -317,7 +341,7 @@ public class ManipuladorGlobalExcecoes {
                 "Ocorreu um erro interno. Tente novamente ou contate o suporte.");
     }
 
-    // ─── Helpers ─────────────────────────────────────────────────────────────
+    //  Helpers 
 
     private String inferirMensagemConflito(String causaLowercase) {
         if (causaLowercase.contains("uk_email") || causaLowercase.contains("email_endereco"))

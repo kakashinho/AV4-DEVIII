@@ -50,7 +50,7 @@ public class EmpresaController {
     @Autowired private ServicoAssembler servicoAssembler;
     @Autowired private VendaAssembler vendaAssembler;
 
-    // ─── CRUD principal ───────────────────────────────────────────────────────
+    //  CRUD principal 
 
     @GetMapping
     public ResponseEntity<CollectionModel<EntityModel<EmpresaResumo>>> listar() {
@@ -101,7 +101,27 @@ public class EmpresaController {
         return ResponseEntity.noContent().build();
     }
 
-    // ─── Sub-recurso: usuários ────────────────────────────────────────────────
+    @DeleteMapping("/{id}/endereco")
+    public ResponseEntity<Void> removerEndereco(@PathVariable Long id) {
+        empresaService.removerEndereco(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/telefones/{telefoneId}")
+    public ResponseEntity<Void> associarTelefone(
+            @PathVariable Long id, @PathVariable Long telefoneId) {
+        empresaService.associarTelefone(id, telefoneId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/telefones/{telefoneId}")
+    public ResponseEntity<Void> desassociarTelefone(
+            @PathVariable Long id, @PathVariable Long telefoneId) {
+        empresaService.desassociarTelefone(id, telefoneId);
+        return ResponseEntity.noContent().build();
+    }
+
+    //  Sub-recurso: usuários
 
     @GetMapping("/{id}/usuarios")
     public ResponseEntity<CollectionModel<EntityModel<UsuarioReferencia>>> listarUsuarios(
@@ -131,7 +151,7 @@ public class EmpresaController {
         return ResponseEntity.noContent().build();
     }
 
-    // ─── Sub-recurso: mercadorias ─────────────────────────────────────────────
+    //  Sub-recurso: mercadorias 
 
     @GetMapping("/{id}/mercadorias")
     public ResponseEntity<CollectionModel<EntityModel<MercadoriaResponse>>> listarMercadorias(
@@ -169,7 +189,7 @@ public class EmpresaController {
         return ResponseEntity.noContent().build();
     }
 
-    // ─── Sub-recurso: serviços ────────────────────────────────────────────────
+    //  Sub-recurso: serviços 
 
     @GetMapping("/{id}/servicos")
     public ResponseEntity<CollectionModel<EntityModel<ServicoResponse>>> listarServicos(
@@ -206,7 +226,7 @@ public class EmpresaController {
         return ResponseEntity.noContent().build();
     }
 
-    // ─── Sub-recurso: vendas ──────────────────────────────────────────────────
+    //  Sub-recurso: vendas 
     // @Transactional removido: serviço retorna VendaResponse (mapeamento dentro da transação do serviço)
 
     @GetMapping("/{empresaId}/vendas")
@@ -229,8 +249,9 @@ public class EmpresaController {
 
     @PostMapping("/{empresaId}/vendas")
     public ResponseEntity<VendaResponse> criarVendaDaEmpresa(
-            @PathVariable Long empresaId, @Valid @RequestBody VendaRequest request) {
-        VendaResponse response = empresaService.criarVenda(empresaId, request);
+            @PathVariable Long empresaId, @Valid @RequestBody VendaRequest request,
+            org.springframework.security.core.Authentication authentication) {
+        VendaResponse response = empresaService.criarVenda(empresaId, request, authentication);
         URI location = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/api/vendas/{id}").buildAndExpand(response.getId()).toUri();
         return ResponseEntity.created(location).body(vendaAssembler.toModel(response));

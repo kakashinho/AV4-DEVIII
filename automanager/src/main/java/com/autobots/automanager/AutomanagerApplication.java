@@ -11,9 +11,31 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.autobots.automanager.entidade.*;
-import com.autobots.automanager.enumeracao.*;
-import com.autobots.automanager.repositorio.*;
+import com.autobots.automanager.entidade.CredencialUsuarioSenha;
+import com.autobots.automanager.entidade.Email;
+import com.autobots.automanager.entidade.Empresa;
+import com.autobots.automanager.entidade.Endereco;
+import com.autobots.automanager.entidade.ItemServico;
+import com.autobots.automanager.entidade.ItemVenda;
+import com.autobots.automanager.entidade.Mercadoria;
+import com.autobots.automanager.entidade.Servico;
+import com.autobots.automanager.entidade.Telefone;
+import com.autobots.automanager.entidade.Usuario;
+import com.autobots.automanager.entidade.Veiculo;
+import com.autobots.automanager.entidade.Venda;
+import com.autobots.automanager.enumeracao.PerfilUsuario;
+import com.autobots.automanager.enumeracao.StatusVenda;
+import com.autobots.automanager.enumeracao.TipoVeiculo;
+import com.autobots.automanager.repositorio.RepositorioCredencial;
+import com.autobots.automanager.repositorio.RepositorioEmail;
+import com.autobots.automanager.repositorio.RepositorioEmpresa;
+import com.autobots.automanager.repositorio.RepositorioEndereco;
+import com.autobots.automanager.repositorio.RepositorioMercadoria;
+import com.autobots.automanager.repositorio.RepositorioServico;
+import com.autobots.automanager.repositorio.RepositorioTelefone;
+import com.autobots.automanager.repositorio.RepositorioUsuario;
+import com.autobots.automanager.repositorio.RepositorioVeiculo;
+import com.autobots.automanager.repositorio.RepositorioVenda;
 
 @SpringBootApplication
 public class AutomanagerApplication implements CommandLineRunner {
@@ -36,14 +58,13 @@ public class AutomanagerApplication implements CommandLineRunner {
 	@Override
 	@Transactional
 	public void run(String... args) throws Exception {
-		// Guard: evita re-execução em banco persistente
 		if (repositorioEmpresa.count() > 0) {
 			return;
 		}
 
 		BCryptPasswordEncoder codificador = new BCryptPasswordEncoder();
 
-		// ── Usuário administrador (login: admin / 123456) ──────────────────────
+		//  Usuário administrador (login: admin / 123456) 
 		CredencialUsuarioSenha credencialAdmin = new CredencialUsuarioSenha();
 		credencialAdmin.setNomeUsuario("admin");
 		credencialAdmin.setSenha(codificador.encode("123456"));
@@ -57,7 +78,7 @@ public class AutomanagerApplication implements CommandLineRunner {
 		admin.getCredenciais().add(credencialAdmin);
 		repositorioUsuario.save(admin);
 
-		// ── Usuário gerente (login: gerente / 123456) ──────────────────────────
+		//  Usuário gerente (login: gerente / 123456) 
 		CredencialUsuarioSenha credencialGerente = new CredencialUsuarioSenha();
 		credencialGerente.setNomeUsuario("gerente");
 		credencialGerente.setSenha(codificador.encode("123456"));
@@ -93,6 +114,14 @@ public class AutomanagerApplication implements CommandLineRunner {
 		empresa.getTelefones().add(telefoneEmpresa);
 		empresa = repositorioEmpresa.save(empresa);
 
+		//  Credencial vendedor (login: vendedor / 123456) 
+		CredencialUsuarioSenha credencialVendedor = new CredencialUsuarioSenha();
+		credencialVendedor.setNomeUsuario("vendedor");
+		credencialVendedor.setSenha(codificador.encode("123456"));
+		credencialVendedor.setCriacao(LocalDateTime.now());
+		credencialVendedor.setInativo(false);
+		credencialVendedor = (CredencialUsuarioSenha) repositorioCredencial.save(credencialVendedor);
+
 		Email emailFuncionario = new Email();
 		emailFuncionario.setEndereco("a@a.com");
 		emailFuncionario = repositorioEmail.save(emailFuncionario);
@@ -102,6 +131,7 @@ public class AutomanagerApplication implements CommandLineRunner {
 		funcionario.setNomeSocial("Dom Pedro");
 		funcionario.getPerfis().add(PerfilUsuario.ROLE_VENDEDOR);
 		funcionario.getEmails().add(emailFuncionario);
+		funcionario.getCredenciais().add(credencialVendedor);
 		funcionario.setEmpresa(empresa);
 		funcionario = repositorioUsuario.save(funcionario);
 
@@ -122,7 +152,7 @@ public class AutomanagerApplication implements CommandLineRunner {
 		roda1.setFabricacao(LocalDate.now());
 		roda1.setNome("Roda Toyota");
 		roda1.setValidade(LocalDate.now().plusYears(2));
-		roda1.setQuantidade(29); // 30 em estoque - 1 vendida = 29
+		roda1.setQuantidade(29);
 		roda1.setValor(new BigDecimal("300.00"));
 		roda1.setDescricao("Original");
 		roda1.setEmpresa(empresa);
@@ -133,11 +163,19 @@ public class AutomanagerApplication implements CommandLineRunner {
 		roda2.setFabricacao(LocalDate.now());
 		roda2.setNome("Roda genérica");
 		roda2.setValidade(LocalDate.now().plusYears(2));
-		roda2.setQuantidade(29); // 30 em estoque - 1 vendida = 29
+		roda2.setQuantidade(29);
 		roda2.setValor(new BigDecimal("150.00"));
 		roda2.setDescricao("Segunda linha");
 		roda2.setEmpresa(empresa);
 		roda2 = repositorioMercadoria.save(roda2);
+
+		//  Credencial cliente (login: cliente / 123456) 
+		CredencialUsuarioSenha credencialCliente = new CredencialUsuarioSenha();
+		credencialCliente.setNomeUsuario("cliente");
+		credencialCliente.setSenha(codificador.encode("123456"));
+		credencialCliente.setCriacao(LocalDateTime.now());
+		credencialCliente.setInativo(false);
+		credencialCliente = (CredencialUsuarioSenha) repositorioCredencial.save(credencialCliente);
 
 		Email emailCliente = new Email();
 		emailCliente.setEndereco("cliente@exemplo.com");
@@ -147,6 +185,7 @@ public class AutomanagerApplication implements CommandLineRunner {
 		cliente.setNome("Cliente");
 		cliente.getPerfis().add(PerfilUsuario.ROLE_CLIENTE);
 		cliente.getEmails().add(emailCliente);
+		cliente.getCredenciais().add(credencialCliente);
 		cliente.setEmpresa(empresa);
 		cliente = repositorioUsuario.save(cliente);
 
@@ -175,7 +214,6 @@ public class AutomanagerApplication implements CommandLineRunner {
 		s3.setEmpresa(empresa);
 		s3 = repositorioServico.save(s3);
 
-		// Venda 1 — 1x Roda Toyota + Troca de rodas + Alinhamento
 		Venda v1 = new Venda();
 		v1.setCadastro(LocalDateTime.now());
 		v1.setIdentificacao("123");
@@ -214,7 +252,6 @@ public class AutomanagerApplication implements CommandLineRunner {
 		v1.setValorTotal(roda1.getValor().add(s1.getValor()).add(s2.getValor()));
 		repositorioVenda.save(v1);
 
-		// Venda 2 — 1x Roda genérica + Alinhamento + Balanceamento
 		Venda v2 = new Venda();
 		v2.setCadastro(LocalDateTime.now());
 		v2.setIdentificacao("456");

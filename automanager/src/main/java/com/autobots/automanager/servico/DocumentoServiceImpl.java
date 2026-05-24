@@ -20,7 +20,7 @@ public class DocumentoServiceImpl implements DocumentoService {
 
     private final RepositorioDocumento repositorio;
 
-    // ─── Validação de ID ──────────────────────────────────────────────────────
+    //  Validação de ID 
 
     private void validarId(Long id) {
         if (id == null || id <= 0) {
@@ -28,13 +28,13 @@ public class DocumentoServiceImpl implements DocumentoService {
         }
     }
 
-    // ─── Normalização: remove pontos, traços, barras e espaços ───────────────
+    //  Normalização: remove pontos, traços, barras e espaços 
 
     private String normalizar(String numero) {
         return numero.replaceAll("[.\\-/ ]", "").trim();
     }
 
-    // ─── Validação semântica por tipo ─────────────────────────────────────────
+    //  Validação semântica por tipo 
 
     private void validarNumeroDocumento(TipoDocumento tipo, String numeroNorm) {
         boolean valido = switch (tipo) {
@@ -59,7 +59,7 @@ public class DocumentoServiceImpl implements DocumentoService {
         };
     }
 
-    // ─── CRUD ─────────────────────────────────────────────────────────────────
+    //  CRUD 
 
     @Override
     @Transactional

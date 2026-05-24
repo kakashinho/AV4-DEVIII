@@ -12,4 +12,5 @@ public interface CredencialService {
     List<Credencial> listarTodos();
     Credencial atualizar(Long id, CredencialUpdateRequest request);
     void remover(Long id);
+    void registrarAcesso(Long credencialId);
 }

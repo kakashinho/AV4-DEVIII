@@ -1,49 +1,44 @@
 package com.autobots.automanager.seguranca.adaptadores;
 
 import java.util.Collection;
-import java.util.List;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import com.autobots.automanager.entidade.CredencialUsuarioSenha;
+import com.autobots.automanager.entidade.CredencialCodigoBarra;
 import com.autobots.automanager.entidade.Usuario;
 
-public class UserDetailsImpl implements UserDetails {
+public class UserDetailsCodigoBarraImpl implements UserDetails {
 
     private final Usuario usuario;
-    private final CredencialUsuarioSenha credencial;
+    private final CredencialCodigoBarra credencial;
 
-    public UserDetailsImpl(Usuario usuario, CredencialUsuarioSenha credencial) {
+    public UserDetailsCodigoBarraImpl(Usuario usuario, CredencialCodigoBarra credencial) {
         this.usuario = usuario;
         this.credencial = credencial;
     }
 
-    public Long getUsuarioId() {
-        return usuario.getId();
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return usuario.getPerfis().stream()
+                .map(perfil -> new SimpleGrantedAuthority(perfil.name()))
+                .toList();
+    }
+
+    @Override
+    public String getPassword() {
+        return null;
     }
 
     public Long getCredencialId() {
         return credencial.getId();
     }
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<SimpleGrantedAuthority> autoridades = usuario.getPerfis().stream()
-                .map(perfil -> new SimpleGrantedAuthority(perfil.name()))
-                .toList();
-        return autoridades;
-    }
-
-    @Override
-    public String getPassword() {
-        return credencial.getSenha();
-    }
-
+    // Prefixo "CB:" distingue tokens de código de barras dos tokens de usuário/senha no JWT
     @Override
     public String getUsername() {
-        return credencial.getNomeUsuario();
+        return "CB:" + credencial.getCodigo();
     }
 
     @Override

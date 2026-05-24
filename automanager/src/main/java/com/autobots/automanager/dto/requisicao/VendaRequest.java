@@ -21,11 +21,13 @@ public class VendaRequest {
     @NotNull(message = "Cliente é obrigatório")
     private Long clienteId;
 
-    @NotNull(message = "Funcionário é obrigatório")
+    // Opcional no payload: VENDEDOR usa o próprio ID inferido do JWT.
+    // ADMIN/GERENTE podem especificar qualquer funcionarioId.
     private Long funcionarioId;
 
     private Long veiculoId;
 
+    @NotNull(message = "Empresa é obrigatória")
     private Long empresaId;
 
     @Valid

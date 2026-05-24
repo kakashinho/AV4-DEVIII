@@ -1,36 +1,49 @@
 @baseUrl = http://localhost:8080/api
 
+### Login ADMIN
+# @name loginAdmin
+POST  http://localhost:8080/auth/login
+Content-Type: application/json
+
+{ "nomeUsuario": "admin", "senha": "123456" }
+
 # =========================================
 # VENDAS - TESTES COMPLETOS (CRUD + ERROS)
 # =========================================
 
 # LISTAR VENDAS
 GET {{baseUrl}}/vendas
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR VENDA OK
 GET {{baseUrl}}/vendas/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR VENDA INEXISTENTE
 GET {{baseUrl}}/vendas/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR VENDA ID INVÁLIDO (STRING)
 GET {{baseUrl}}/vendas/abc
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR VENDA ID ZERO
 GET {{baseUrl}}/vendas/0
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR VENDA ID NEGATIVO
 GET {{baseUrl}}/vendas/-1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
@@ -41,6 +54,7 @@ GET {{baseUrl}}/vendas/-1
 # CRIAR VENDA COMPLETA (mercadoria + serviço)
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "VENDA-001",
@@ -61,6 +75,7 @@ Content-Type: application/json
 # CRIAR VENDA SOMENTE COM MERCADORIA
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "VENDA-002",
@@ -77,6 +92,7 @@ Content-Type: application/json
 # CRIAR VENDA SOMENTE COM SERVIÇO
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "VENDA-003",
@@ -93,6 +109,7 @@ Content-Type: application/json
 # CRIAR VENDA SEM VEÍCULO (válido)
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "VENDA-004",
@@ -113,6 +130,7 @@ Content-Type: application/json
 # IDENTIFICAÇÃO VAZIA
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "",
@@ -129,6 +147,7 @@ Content-Type: application/json
 # IDENTIFICAÇÃO NULA
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "clienteId": 3,
@@ -141,6 +160,7 @@ Content-Type: application/json
 # SEM CLIENTE
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "VENDA-005",
@@ -156,6 +176,7 @@ Content-Type: application/json
 # SEM FUNCIONÁRIO
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "VENDA-006",
@@ -171,6 +192,7 @@ Content-Type: application/json
 # SEM ITENS (REGRA NEGÓCIO — deve retornar 422)
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "VENDA-007",
@@ -186,6 +208,7 @@ Content-Type: application/json
 # CLIENTE = FUNCIONÁRIO (REGRA NEGÓCIO — deve retornar 422)
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "VENDA-008",
@@ -206,6 +229,7 @@ Content-Type: application/json
 # CLIENTE INEXISTENTE
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "VENDA-009",
@@ -222,6 +246,7 @@ Content-Type: application/json
 # FUNCIONÁRIO INEXISTENTE
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "VENDA-010",
@@ -238,6 +263,7 @@ Content-Type: application/json
 # MERCADORIA INEXISTENTE
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "VENDA-011",
@@ -254,6 +280,7 @@ Content-Type: application/json
 # SERVIÇO INEXISTENTE
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "VENDA-012",
@@ -270,6 +297,7 @@ Content-Type: application/json
 # VEÍCULO INEXISTENTE
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "VENDA-013",
@@ -291,6 +319,7 @@ Content-Type: application/json
 # JSON INVÁLIDO (vírgula sobrando)
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "VENDA-014",
@@ -306,6 +335,7 @@ Content-Type: application/json
 # BODY VAZIO
 POST {{baseUrl}}/vendas
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {}
 
@@ -328,6 +358,7 @@ Content-Type: text/plain
 # ATUALIZAR OK
 PUT {{baseUrl}}/vendas/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "VENDA-001-UPDATE",
@@ -348,6 +379,7 @@ Content-Type: application/json
 # ATUALIZAR SEM IDENTIFICAÇÃO
 PUT {{baseUrl}}/vendas/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "clienteId": 3,
@@ -359,6 +391,7 @@ Content-Type: application/json
 # ATUALIZAR SEM BODY
 PUT {{baseUrl}}/vendas/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {}
 
@@ -367,6 +400,7 @@ Content-Type: application/json
 # ATUALIZAR ID INVÁLIDO
 PUT {{baseUrl}}/vendas/abc
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "identificacao": "TESTE"
@@ -380,15 +414,18 @@ Content-Type: application/json
 
 # DELETE OK
 DELETE {{baseUrl}}/vendas/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DELETE INEXISTENTE
 DELETE {{baseUrl}}/vendas/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DELETE ID INVÁLIDO
 DELETE {{baseUrl}}/vendas/abc
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###

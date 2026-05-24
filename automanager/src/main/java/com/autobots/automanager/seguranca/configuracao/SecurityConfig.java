@@ -49,10 +49,10 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> {
                 // Rotas públicas — nenhuma autenticação necessária
-                auth.requestMatchers(HttpMethod.POST, "/auth/login").permitAll();
+                auth.requestMatchers(HttpMethod.POST, "/auth/login", "/auth/login/codigo-barra").permitAll();
                 auth.requestMatchers("/h2-console/**").permitAll();
 
-                // ── Gateway centralizado ──────────────────────────────────────
+                //  Gateway centralizado 
                 // Todas as regras vêm do RoutePermissionRegistry.
                 // Nenhum @PreAuthorize nos controllers é necessário.
                 permissionRegistry.getPermissoes().forEach(p ->
@@ -63,7 +63,19 @@ public class SecurityConfig {
                 auth.anyRequest().authenticated();
             })
             .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"erro\":\"Não autenticado. Forneça um token JWT válido.\"}");
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"erro\":\"Acesso negado. Você não tem permissão para este recurso.\"}");
+                })
+            );
 
         // Permite iframes do console H2 (desenvolvimento)
         http.headers(headers -> headers.frameOptions(fo -> fo.sameOrigin()));

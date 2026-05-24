@@ -1,40 +1,54 @@
 @baseUrl = http://localhost:8080/api
 
+### Login ADMIN
+# @name loginAdmin
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{ "nomeUsuario": "admin", "senha": "123456" }
+
 # SERVICOS
 
+###
 # LISTAR SERVICOS OK
 GET {{baseUrl}}/servicos
-
+Authorization: Bearer {{loginAdmin.response.body.token}}
 ###
 
 # BUSCAR SERVICO EXISTENTE OK
 GET {{baseUrl}}/servicos/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR SERVICO INEXISTENTE OK
 GET {{baseUrl}}/servicos/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR SERVICO COM ID INVALIDO
 GET {{baseUrl}}/servicos/abc
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR SERVICO COM ID NEGATIVO
 GET {{baseUrl}}/servicos/-1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR SERVICO COM ID ZERO
 GET {{baseUrl}}/servicos/0
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # CRIAR SERVICO VALIDO OK
 POST {{baseUrl}}/servicos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Troca de óleo",
@@ -47,12 +61,14 @@ Content-Type: application/json
 # CRIAR SERVICO SEM BODY
 POST {{baseUrl}}/servicos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # CRIAR SERVICO COM JSON INVALIDO
 POST {{baseUrl}}/servicos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Alinhamento",
@@ -65,6 +81,7 @@ Content-Type: application/json
 # CRIAR SERVICO COM CONTENT-TYPE ERRADO
 POST {{baseUrl}}/servicos
 Content-Type: text/plain
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Balanceamento",
@@ -77,6 +94,7 @@ Content-Type: text/plain
 # CRIAR SERVICO SEM NOME (ERRO VALIDACAO)
 POST {{baseUrl}}/servicos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "",
@@ -89,6 +107,7 @@ Content-Type: application/json
 # CRIAR SERVICO SEM VALOR (ERRO VALIDACAO)
 POST {{baseUrl}}/servicos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Freio",
@@ -100,6 +119,7 @@ Content-Type: application/json
 # CRIAR SERVICO COM VALOR ZERO
 POST {{baseUrl}}/servicos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Suspensão",
@@ -112,6 +132,7 @@ Content-Type: application/json
 # CRIAR SERVICO COM VALOR NEGATIVO
 POST {{baseUrl}}/servicos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Motor",
@@ -124,6 +145,7 @@ Content-Type: application/json
 # CRIAR SERVICO VALIDO 2
 POST {{baseUrl}}/servicos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Alinhamento",
@@ -136,6 +158,7 @@ Content-Type: application/json
 # ATUALIZAR SERVICO VALIDO
 PUT {{baseUrl}}/servicos/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Troca de óleo premium",
@@ -145,11 +168,13 @@ Content-Type: application/json
 
 ###
 
-# ATUALIZAR SERVICO PARCIAL - Não é possível
+# ATUALIZAR SERVICO PARCIAL
 PUT {{baseUrl}}/servicos/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
+  "nome": "Teste",
   "valor": 200.00
 }
 
@@ -158,6 +183,7 @@ Content-Type: application/json
 # ATUALIZAR SERVICO COM ID INVALIDO
 PUT {{baseUrl}}/servicos/abc
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Teste"
@@ -168,6 +194,7 @@ Content-Type: application/json
 # ATUALIZAR SERVICO COM ID NEGATIVO
 PUT {{baseUrl}}/servicos/-1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Teste"
@@ -178,6 +205,7 @@ Content-Type: application/json
 # ATUALIZAR SERVICO SEM BODY
 PUT {{baseUrl}}/servicos/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {}
 
@@ -185,30 +213,36 @@ Content-Type: application/json
 
 # DELETAR SERVICO VALIDO
 DELETE {{baseUrl}}/servicos/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DELETAR SERVICO INEXISTENTE
 DELETE {{baseUrl}}/servicos/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DELETAR SERVICO COM ID INVALIDO
 DELETE {{baseUrl}}/servicos/abc
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DELETAR SERVICO COM ID NEGATIVO
 DELETE {{baseUrl}}/servicos/-1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DELETAR SERVICO COM ID ZERO
 DELETE {{baseUrl}}/servicos/0
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # TESTE HATEOAS
 GET {{baseUrl}}/servicos/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###

@@ -1,20 +1,32 @@
 @baseUrl = http://localhost:8080/api
 
+### Login ADMIN
+# @name loginAdmin
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{ "nomeUsuario": "admin", "senha": "123456" }
+
+###
 # DOCUMENTO
 
+###
 # LISTAR DOCUMENTO OK
 GET {{baseUrl}}/documentos
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR DOCUMENTO EXISTENTE OK
 GET {{baseUrl}}/documentos/2
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # ASSOCIAR DOCUMENTO VALIDO
 POST {{baseUrl}}/usuarios/2/documentos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "documentoId": 2
@@ -25,6 +37,7 @@ Content-Type: application/json
 # ASSOCIAR DOCUMENTO INEXISTENTE
 POST {{baseUrl}}/usuarios/1/documentos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "documentoId": 999999
@@ -35,6 +48,7 @@ Content-Type: application/json
 # ASSOCIAR DOCUMENTO COM USUARIO INEXISTENTE
 POST {{baseUrl}}/usuarios/999999/documentos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "documentoId": 1
@@ -45,6 +59,7 @@ Content-Type: application/json
 # ASSOCIAR DOCUMENTO COM ID NULO
 POST {{baseUrl}}/usuarios/1/documentos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "documentoId": null
@@ -55,6 +70,7 @@ Content-Type: application/json
 # ASSOCIAR DOCUMENTO SEM ID
 POST {{baseUrl}}/usuarios/1/documentos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {}
 
@@ -63,6 +79,7 @@ Content-Type: application/json
 # ASSOCIAR DOCUMENTO COM JSON INVALIDO
 POST {{baseUrl}}/usuarios/1/documentos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "documentoId": 1,
@@ -73,6 +90,7 @@ Content-Type: application/json
 # ASSOCIAR DOCUMENTO COM CONTENT TYPE INVALIDO
 POST {{baseUrl}}/usuarios/1/documentos
 Content-Type: text/plain
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "documentoId": 1
@@ -83,6 +101,7 @@ Content-Type: text/plain
 # ASSOCIAR DOCUMENTO COM ID STRING
 POST {{baseUrl}}/usuarios/1/documentos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "documentoId": "abc"
@@ -93,6 +112,7 @@ Content-Type: application/json
 # ASSOCIAR DOCUMENTO COM ID NEGATIVO
 POST {{baseUrl}}/usuarios/1/documentos
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "documentoId": -1
@@ -100,28 +120,34 @@ Content-Type: application/json
 
 ###
 GET {{baseUrl}}/usuarios/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DESASSOCIAR DOCUMENTO VALIDO
 DELETE {{baseUrl}}/usuarios/1/documentos/2
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DESASSOCIAR DOCUMENTO INEXISTENTE
 DELETE {{baseUrl}}/usuarios/1/documentos/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DESASSOCIAR DOCUMENTO DE USUARIO INEXISTENTE
 DELETE {{baseUrl}}/usuarios/999999/documentos/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DESASSOCIAR DOCUMENTO COM ID INVALIDO
 DELETE {{baseUrl}}/usuarios/1/documentos/abc
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # DESASSOCIAR DOCUMENTO COM USUARIO INVALIDO
 DELETE {{baseUrl}}/usuarios/abc/documentos/1
+Authorization: Bearer {{loginAdmin.response.body.token}}

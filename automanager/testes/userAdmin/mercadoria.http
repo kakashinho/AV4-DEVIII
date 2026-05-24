@@ -1,40 +1,69 @@
 @baseUrl = http://localhost:8080/api
 
+### Login ADMIN
+# @name loginAdmin
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{ "nomeUsuario": "admin", "senha": "123456" }
+
 # MERCADORIAS
+
+###
 
 # LISTAR MERCADORIAS OK
 GET {{baseUrl}}/mercadorias
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR MERCADORIA EXISTENTE OK
 GET {{baseUrl}}/mercadorias/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+###
+
+# MOVIMENTAÇÃO DO ESTOQUE
+PATCH {{baseUrl}}/mercadorias/1/estoque
+Authorization: Bearer {{loginAdmin.response.body.token}}
+Content-Type: application/json
+
+{
+  "quantidade": 1,
+  "tipo": "SAIDA"
+}
+
 
 ###
 
 # BUSCAR MERCADORIA INEXISTENTE OK
 GET {{baseUrl}}/mercadorias/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR MERCADORIA COM ID INVALIDO
 GET {{baseUrl}}/mercadorias/abc
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR MERCADORIA COM ID NEGATIVO
 GET {{baseUrl}}/mercadorias/-1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # BUSCAR MERCADORIA COM ID ZERO
 GET {{baseUrl}}/mercadorias/0
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # CRIAR MERCADORIA VALIDA OK
 POST {{baseUrl}}/mercadorias
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Óleo 5W30",
@@ -50,12 +79,14 @@ Content-Type: application/json
 # CRIAR MERCADORIA SEM BODY
 POST {{baseUrl}}/mercadorias
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # CRIAR MERCADORIA JSON INVALIDO
 POST {{baseUrl}}/mercadorias
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Filtro de ar",
@@ -71,6 +102,7 @@ Content-Type: application/json
 # CRIAR MERCADORIA CONTENT TYPE ERRADO
 POST {{baseUrl}}/mercadorias
 Content-Type: text/plain
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Pneu",
@@ -86,6 +118,7 @@ Content-Type: text/plain
 # CRIAR MERCADORIA SEM NOME (ERRO VALIDACAO)
 POST {{baseUrl}}/mercadorias
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "",
@@ -101,6 +134,7 @@ Content-Type: application/json
 # CRIAR MERCADORIA SEM VALOR (ERRO VALIDACAO)
 POST {{baseUrl}}/mercadorias
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Bateria",
@@ -115,6 +149,7 @@ Content-Type: application/json
 # CRIAR MERCADORIA VALIDADE PASSADA (ERRO VALIDACAO)
 POST {{baseUrl}}/mercadorias
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Item vencido",
@@ -130,6 +165,7 @@ Content-Type: application/json
 # CRIAR MERCADORIA FABRICACAO FUTURA (ERRO VALIDACAO)
 POST {{baseUrl}}/mercadorias
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Item inválido",
@@ -145,6 +181,7 @@ Content-Type: application/json
 # CRIAR MERCADORIA COM QUANTIDADE NEGATIVA (REGRA SERVICE)
 POST {{baseUrl}}/mercadorias
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Erro estoque",
@@ -160,6 +197,7 @@ Content-Type: application/json
 # ATUALIZAR MERCADORIA VALIDA
 PUT {{baseUrl}}/mercadorias/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Óleo premium",
@@ -175,9 +213,10 @@ Content-Type: application/json
 # ATUALIZAR MERCADORIA PARCIAL
 PUT {{baseUrl}}/mercadorias/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
-  "valor": 99.90
+  "valor": 99.91
 }
 
 ###
@@ -185,6 +224,7 @@ Content-Type: application/json
 # ATUALIZAR MERCADORIA COM ID INVALIDO
 PUT {{baseUrl}}/mercadorias/abc
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Teste"
@@ -195,6 +235,7 @@ Content-Type: application/json
 # ATUALIZAR MERCADORIA COM ID NEGATIVO
 PUT {{baseUrl}}/mercadorias/-1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {
   "nome": "Teste"
@@ -205,6 +246,7 @@ Content-Type: application/json
 # ATUALIZAR MERCADORIA SEM BODY
 PUT {{baseUrl}}/mercadorias/1
 Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 {}
 
@@ -212,70 +254,28 @@ Content-Type: application/json
 
 # REMOVER MERCADORIA VALIDA
 DELETE {{baseUrl}}/mercadorias/1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # REMOVER MERCADORIA INEXISTENTE
 DELETE {{baseUrl}}/mercadorias/999999
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # REMOVER MERCADORIA ID INVALIDO
 DELETE {{baseUrl}}/mercadorias/abc
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # REMOVER MERCADORIA ID NEGATIVO
 DELETE {{baseUrl}}/mercadorias/-1
+Authorization: Bearer {{loginAdmin.response.body.token}}
 
 ###
 
 # REMOVER MERCADORIA ID ZERO
-DELETE {{baseUrl}}/mercadorias/0
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-###
-
-# AJUSTAR ESTOQUE ENTRADA (REGRA DE NEGOCIO)
-POST {{baseUrl}}/mercadorias/2/entrada?quantidade=5
-
-###
-
-# AJUSTAR ESTOQUE SAIDA (REGRA DE NEGOCIO)
-POST {{baseUrl}}/mercadorias/2/saida?quantidade=3
-
-###
-
-# CONSUMIR ESTOQUE VALIDO
-POST {{baseUrl}}/mercadorias/2/consumir?quantidade=2
-
-###
-
-# CONSUMIR ESTOQUE INVALIDO (NEGATIVO)
-POST {{baseUrl}}/mercadorias/2/consumir?quantidade=-5
-
-###
-
-# CONSUMIR ESTOQUE INSUFICIENTE
-POST {{baseUrl}}/mercadorias/2/consumir?quantidade=9999
-
-###
-
-# TESTE HATEOAS
-GET {{baseUrl}}/mercadorias/2
-
-###
+DELETE {{baseUrl}}/mercadorias/1
+Authorization: Bearer {{loginAdmin.response.body.token}}

@@ -68,8 +68,11 @@ public class MercadoriaServiceImpl implements MercadoriaService {
     @Override
     @Transactional
     public void remover(Long id) {
-        repositorio.findById(id)
+        Mercadoria mercadoria = repositorio.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Mercadoria não encontrada"));
+        if (mercadoria.getEmpresa() != null) {
+            throw new MercadoriaEmUsoException(id);
+        }
         if (repositorioVenda.existsByItensMercadoriaId(id)) {
             throw new MercadoriaEmUsoException(id);
         }
