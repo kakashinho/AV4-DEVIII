@@ -83,6 +83,7 @@ Você precisa ter o Docker instalado e rodando no seu computador. Caso não tenh
 **Passo 1: Construir a imagem da API**  
 Na raiz do projeto (onde está o `Dockerfile`), execute:
 ```bash
+cd automanager
 docker build -t automanager-api .
 ```
 
